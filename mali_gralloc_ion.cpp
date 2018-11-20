@@ -262,6 +262,11 @@ void set_ion_flags(unsigned int heap_type, uint64_t usage, unsigned int *priv_he
 		{
 			*priv_heap_flag &= ~private_handle_t::PRIV_FLAGS_USES_ION_DMA_HEAP;
 		}
+
+		if (usage & GRALLOC_USAGE_AML_SECURE || usage & GRALLOC_USAGE_PROTECTED)
+		{
+			*priv_heap_flag |= private_handle_t::PRIV_FLAGS_SECURE_PROTECTED;
+		}
 	}
 
 	if (ion_flags)
