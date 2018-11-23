@@ -208,19 +208,23 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
         int afbcFormat = 0;
 
         if (internalFormat & MALI_GRALLOC_INTFMT_AFBCENABLE_MASK) {
-            afbcFormat |=(VPU_AFBC_EN | VPU_AFBC_BLOCK_SPLIT);
+            afbcFormat |=(VPU_AFBC_EN | VPU_AFBC_BLOCK_SPLIT | VPU_AFBC_YUV_TRANSFORM);
 
             if (internalFormat & MALI_GRALLOC_INTFMT_AFBC_WIDEBLK) {
                 afbcFormat |= VPU_AFBC_SUPER_BLOCK_ASPECT;
             }
 
-            /*if (internalFormat & MALI_GRALLOC_INTFMT_AFBC_SPLITBLK) {
+            #if 0
+            if (internalFormat & MALI_GRALLOC_INTFMT_AFBC_SPLITBLK) {
                 afbcFormat |= VPU_AFBC_BLOCK_SPLIT;
-            }*/
+            }
+            #endif
 
             if (internalFormat & MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS) {
                 afbcFormat |= VPU_AFBC_TILED_HEADER_EN;
             }
+
+            #if 0
             if (gralloc_buffer_attr_map(buffer, 0) >= 0) {
                 int tmp=0;
                 if (gralloc_buffer_attr_read(buffer, GRALLOC_ARM_BUFFER_ATTR_AFBC_YUV_TRANS, &tmp) >= 0) {
@@ -229,6 +233,7 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
                     }
                 }
             }
+            #endif
         }
         return afbcFormat;
     }
