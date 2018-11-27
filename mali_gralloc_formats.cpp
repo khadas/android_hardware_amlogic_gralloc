@@ -694,7 +694,7 @@ int get_meson_dpu_gpu_caps()
 	char osd_afbcd_value[] = "00";
 	int  osd_afbcd_fd = -1;
 
-	if (property_get("osd.afbcd.enable", osd_afbcd, "1") > 0)
+	if (property_get("vendor.afbcd.enable", osd_afbcd, "1") > 0)
 	{
 		osd_afbcd_enabled = atoi(osd_afbcd);
 	}
