@@ -63,8 +63,6 @@
 // Default YUV stride aligment in Android
 #define YUV_ANDROID_PLANE_ALIGN 16
 
-#define OMX_VIDEOLAYER_ALLOC_BUFFER_WIDTH     192
-#define OMX_VIDEOLAYER_ALLOC_BUFFER_HEIGHT    90
 
 /*
  * Type of allocation

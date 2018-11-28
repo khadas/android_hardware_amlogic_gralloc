@@ -33,6 +33,7 @@
 #include "mali_gralloc_ion.h"
 #include "mali_gralloc_reference.h"
 #include "ion_wrapper.h"
+#include "amlogic/am_gralloc_internal.h"
 
 #if GRALLOC_USE_GRALLOC1_API == 1
 
@@ -247,7 +248,14 @@ int mali_gralloc_validate_buffer_size(buffer_handle_t buffer, gralloc1_buffer_de
 		return GRALLOC1_ERROR_BAD_VALUE;
 	}
 
-	bufferSize = hnd->byte_stride/stride*descriptorInfo->width*descriptorInfo->height;
+	if (am_gralloc_is_omx_metadata_extend_usage(hnd->usage))
+	{
+		bufferSize = hnd->byte_stride/stride*OMX_VIDEOLAYER_ALLOC_BUFFER_WIDTH*OMX_VIDEOLAYER_ALLOC_BUFFER_HEIGHT;
+	}
+	else
+	{
+		bufferSize = hnd->byte_stride/stride*descriptorInfo->width*descriptorInfo->height;
+	}
 
 	if (descriptorInfo->layerCount < 0)
 	{
@@ -258,7 +266,7 @@ int mali_gralloc_validate_buffer_size(buffer_handle_t buffer, gralloc1_buffer_de
 	{
 		if (hnd->size < bufferSize)
 		{
-			AERR("buffer size is not large enough %d, returning error", hnd->size);
+			AERR("buffer size is not large enough hnd->size:%d hnd->usage:%#X, returning error", hnd->size, hnd->usage);
 			return GRALLOC1_ERROR_BAD_VALUE;
 		}
 	}
