@@ -179,6 +179,7 @@ static bool is_afbc_format(uint64_t internal_format)
 static void apply_gpu_producer_limitations(int req_format, uint64_t *producer_runtime_mask)
 {
 	char gpu_afbc[PROPERTY_VALUE_MAX];
+	char prop[PROPERTY_VALUE_MAX];
 	int gpu_afbc_limit = 0;
 	if (is_android_yuv_format(req_format))
 	{
@@ -193,13 +194,20 @@ static void apply_gpu_producer_limitations(int req_format, uint64_t *producer_ru
 				~(MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_SPLITBLK | MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_WIDEBLK);
 		}
 	}
-	if (property_get("vendor.afbc.limit", gpu_afbc, "0") > 0)
+	if (property_get("media.afbc.limit", gpu_afbc, "0") > 0)
 	{
 		gpu_afbc_limit = atoi(gpu_afbc);
 	}
+	if (property_get("ro.bootimage.build.fingerprint", prop, NULL) > 0)
+	{
+		if (strstr(prop, "generic"))
+		{
+			gpu_afbc_limit = 1;
+		}
+	}
 	if (gpu_afbc_limit)
 	{
-		ALOGD("Gralloc Deubg: vendor.afbc.limit is set to 1");
+		ALOGD("Gralloc Deubg: media.afbc.limit is set to 1");
 		*producer_runtime_mask &= ~MALI_GRALLOC_FORMAT_CAPABILITY_AFBCENABLE_MASK;
 	}
 }
