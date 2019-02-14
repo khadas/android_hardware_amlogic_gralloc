@@ -235,17 +235,18 @@ bool am_gralloc_is_omx_metadata_buffer(
     return ret;
 }
 
- typedef struct am_sideband_handle {
-    native_handle_t base;
-    int id;
-    int flags;
- } am_sideband_handle_t;
+typedef struct am_sideband_handle {
+   native_handle_t base;
+   unsigned int id;
+   int flags;
+   int channel;
+} am_sideband_handle_t;
 
-#define AM_SIDEBAND_HANDLE_NUM_INT (2)
+#define AM_SIDEBAND_HANDLE_NUM_INT (3)
 #define AM_SIDEBAND_HANDLE_NUM_FD (0)
 #define AM_SIDEBAND_IDENTIFIER (0xabcdcdef)
 
-native_handle_t * am_gralloc_create_sideband_handle(int type) {
+native_handle_t * am_gralloc_create_sideband_handle(int type, int channel) {
     am_sideband_handle_t * pHnd = (am_sideband_handle_t *)
         native_handle_create(AM_SIDEBAND_HANDLE_NUM_FD,
         AM_SIDEBAND_HANDLE_NUM_INT);
@@ -255,7 +256,10 @@ native_handle_t * am_gralloc_create_sideband_handle(int type) {
         pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_OVERLAY;
     } else if (type == AM_OMX_SIDEBAND) {
         pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_OMX;
+    } else if (type == AM_AMCODEX_SIDEBAND) {
+        pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_AMCODEX;
     }
+    pHnd->channel = channel;
 
     return (native_handle_t *)pHnd;
 }
@@ -266,6 +270,31 @@ int am_gralloc_destroy_sideband_handle(native_handle_t * hnd) {
     }
 
     return 0;
+}
+
+ int am_gralloc_get_sideband_channel(
+    const native_handle_t * hnd, int * channel) {
+    if (!hnd || hnd->version != sizeof(native_handle_t)
+        || hnd->numInts != AM_SIDEBAND_HANDLE_NUM_INT || hnd->numFds != AM_SIDEBAND_HANDLE_NUM_FD) {
+        return GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    am_sideband_handle_t * buffer = (am_sideband_handle_t *)(hnd);
+    if (buffer->id != AM_SIDEBAND_IDENTIFIER)
+        return GRALLOC1_ERROR_BAD_HANDLE;
+
+    int ret = GRALLOC1_ERROR_NONE;
+    if (buffer) {
+        if (buffer->channel == AM_VIDEO_DEFAULT) {
+            *channel = AM_VIDEO_DEFAULT;
+        } else {
+            *channel = AM_VIDEO_EXTERNAL;
+        }
+    } else {
+        ret = GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    return ret;
 }
 
 int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
