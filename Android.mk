@@ -17,9 +17,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# Amlogic usage & flags api.
-include $(LOCAL_PATH)/amlogic/Android.mk
-
 # Include platform specific makefiles
 include $(if $(wildcard $(LOCAL_PATH)/Android.$(TARGET_BOARD_PLATFORM).mk), $(LOCAL_PATH)/Android.$(TARGET_BOARD_PLATFORM).mk,)
 
@@ -214,3 +211,6 @@ endif
 LOCAL_MODULE_OWNER := arm
 
 include $(BUILD_SHARED_LIBRARY)
+
+# Amlogic usage & flags api.
+include $(LOCAL_PATH)/amlogic/Android.mk

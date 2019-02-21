@@ -28,6 +28,8 @@
 
 #ifdef GRALLOC_AML_EXTEND
 #include "amlogic/am_gralloc_internal.h"
+#else
+#include "gralloc_usage_ext.h"
 #endif
 
 #include "mali_gralloc_module.h"
@@ -1186,6 +1188,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		 * and must fill the variables pixel_stride, byte_stride and size.
 		 */
 		default:
+			AERR("unsupport format 0x%" PRIx64, base_format);
 			return -EINVAL;
 		}
 

@@ -625,6 +625,7 @@ static bool determine_producer(mali_gralloc_producer_type *producer, int usage)
 
 	if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK))
 	{
+		*producer = MALI_GRALLOC_PRODUCER_CPU;
 		rval = false;
 	}
 	/* This is a specific case where GRALLOC_USAGE_HW_COMPOSER can indicate display as a producer.
@@ -657,7 +658,7 @@ static bool determine_producer(mali_gralloc_producer_type *producer, int usage)
 	}
 	else if (usage == GRALLOC_USAGE_HW_COMPOSER)
 	{
-		*producer = MALI_GRALLOC_PRODUCER_DISPLAY_AEU;
+		*producer = MALI_GRALLOC_PRODUCER_GPU_OR_DISPLAY;
 	}
 	return rval;
 }
@@ -671,6 +672,7 @@ static bool determine_consumer(mali_gralloc_consumer_type *consumer, int usage)
 
 	if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK))
 	{
+		*consumer = MALI_GRALLOC_CONSUMER_CPU;
 		rval = false;
 	}
 	/* When usage explicitly targets a consumer, as it does with GRALLOC_USAGE_HW_FB,
@@ -696,7 +698,7 @@ static bool determine_consumer(mali_gralloc_consumer_type *consumer, int usage)
 	}
 	else if (usage & GRALLOC_USAGE_HW_TEXTURE)
 	{
-		*consumer = MALI_GRALLOC_CONSUMER_GPU_EXCL;
+		*consumer = MALI_GRALLOC_CONSUMER_CPU;
 	}
 	else if (usage == GRALLOC_USAGE_HW_COMPOSER)
 	{
@@ -899,8 +901,8 @@ already_init:
 uint64_t mali_gralloc_select_format(uint64_t req_format, mali_gralloc_format_type type, uint64_t usage, int buffer_size)
 {
 	uint64_t internal_format = 0;
-	mali_gralloc_consumer_type consumer;
-	mali_gralloc_producer_type producer;
+	mali_gralloc_consumer_type consumer = MALI_GRALLOC_CONSUMER_CPU;
+	mali_gralloc_producer_type producer = MALI_GRALLOC_PRODUCER_CPU;
 	uint64_t producer_runtime_mask = ~(0ULL);
 	uint64_t consumer_runtime_mask = ~(0ULL);
 	uint64_t req_format_mapped = 0;

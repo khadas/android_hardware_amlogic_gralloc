@@ -8,9 +8,15 @@
  */
 
 #include "am_gralloc_ext.h"
+#if USE_BUFFER_USAGE == 1
 #include <hardware/gralloc1.h>
-#include "gralloc_priv.h"
+#else
+#include <hardware/gralloc.h>
+#include <gralloc_usage_ext.h>
+#endif
+#include <gralloc_priv.h>
 #include "gralloc_buffer_priv.h"
+
 
 int am_gralloc_ext_get_ext_attr(struct private_handle_t * hnd,
     buf_attr attr, int * val) {
@@ -77,25 +83,44 @@ bool am_gralloc_is_omx_metadata_producer(uint64_t usage) {
 }
 #else
 uint64_t am_gralloc_get_video_overlay_producer_usage() {
+#if USE_BUFFER_USAGE == 1
     return GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER;
+#else
+    return GRALLOC_USAGE_AML_VIDEO_OVERLAY;
+#endif
 }
 
 uint64_t am_gralloc_get_omx_metadata_producer_usage() {
+#if USE_BUFFER_USAGE == 1
     return (GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER ||
             GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN ||
             GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN);
+#else
+    return (GRALLOC_USAGE_AML_VIDEO_OVERLAY ||
+            GRALLOC_USAGE_SW_READ_OFTEN ||
+            GRALLOC_USAGE_SW_WRITE_OFTEN);
+#endif
 }
 
 uint64_t am_gralloc_get_omx_osd_producer_usage() {
+#if USE_BUFFER_USAGE == 1
     return (GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER ||
             GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET);
+#else
+    return (GRALLOC_USAGE_AML_VIDEO_OVERLAY ||
+            GRALLOC_USAGE_HW_RENDER);
+#endif
 }
 
 bool am_gralloc_is_omx_metadata_producer(uint64_t usage) {
     if (!am_gralloc_is_omx_osd_producer(usage)) {
         uint64_t omx_metadata_usage = am_gralloc_get_omx_metadata_producer_usage();
         if (((usage & omx_metadata_usage) == omx_metadata_usage)
+#if GRALLOC_USE_GRALLOC1_API == 1
             && !(usage & GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET)) {
+#else
+            && !(usage & GRALLOC_USAGE_HW_RENDER)) {
+#endif
             return true;
         }
     }
@@ -174,6 +199,9 @@ bool am_gralloc_is_secure_buffer(const native_handle_t *hnd) {
 
 bool am_gralloc_is_coherent_buffer(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (NULL == buffer)
+        return false;
+
     if ((buffer->flags & private_handle_t::PRIV_FLAGS_CONTINUOUS_BUF)
             || (buffer->flags & private_handle_t::PRIV_FLAGS_USES_ION_DMA_HEAP)) {
         return true;
@@ -298,14 +326,15 @@ int am_gralloc_destroy_sideband_handle(native_handle_t * hnd) {
 }
 
 int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
-    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
 
     if (buffer) {
         uint64_t internalFormat = buffer->internal_format;
         int afbcFormat = 0;
 
         if (internalFormat & MALI_GRALLOC_INTFMT_AFBCENABLE_MASK) {
-            afbcFormat |=(VPU_AFBC_EN | VPU_AFBC_BLOCK_SPLIT | VPU_AFBC_YUV_TRANSFORM);
+            afbcFormat |=
+                (VPU_AFBC_EN | VPU_AFBC_YUV_TRANSFORM |VPU_AFBC_BLOCK_SPLIT);
 
             if (internalFormat & MALI_GRALLOC_INTFMT_AFBC_WIDEBLK) {
                 afbcFormat |= VPU_AFBC_SUPER_BLOCK_ASPECT;
