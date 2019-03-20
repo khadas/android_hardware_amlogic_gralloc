@@ -278,7 +278,8 @@ void set_ion_flags(unsigned int heap_type, uint64_t usage, unsigned int *priv_he
 		if ((heap_type != ION_HEAP_TYPE_DMA))
 		{
 #endif
-			if (usage & (GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK))
+			if ((usage & (GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK))
+				|| (usage == GRALLOC_USAGE_HW_TEXTURE))
 			{
 				*ion_flags = ION_FLAG_CACHED | ION_FLAG_CACHED_NEEDS_SYNC;
 			}
@@ -775,7 +776,8 @@ void am_set_ion_flags(unsigned int heap_type, uint64_t usage,
 		if ((heap_type != ION_HEAP_TYPE_DMA) &&
 			(heap_type != ION_HEAP_TYPE_CUSTOM))
 		{
-			if (usage & (GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK))
+			if ((usage & (GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK))
+				|| (usage == GRALLOC_USAGE_HW_TEXTURE))
 			{
 				*ion_flags = ION_FLAG_CACHED | ION_FLAG_CACHED_NEEDS_SYNC;
 			}
