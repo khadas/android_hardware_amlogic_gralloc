@@ -13,6 +13,8 @@
 #include <utils/NativeHandle.h>
 
 
+bool am_gralloc_is_valid_graphic_buffer(const native_handle_t * hnd);
+
 /*
 For modules to set special usage to window.
 all producer usage is in android.hardware.graphics.common@1.0.BufferUsage.
@@ -37,6 +39,8 @@ int am_gralloc_get_stride_in_byte(const native_handle_t * hnd);
 int am_gralloc_get_stride_in_pixel(const native_handle_t * hnd);
 int am_gralloc_get_width(const native_handle_t * hnd);
 int am_gralloc_get_height(const native_handle_t * hnd);
+uint64_t am_gralloc_get_producer_usage(const native_handle_t * hnd);
+uint64_t am_gralloc_get_consumer_usage(const native_handle_t * hnd);
 
 /*
 For modules to check special buffer.

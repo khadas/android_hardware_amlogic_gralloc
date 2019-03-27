@@ -17,6 +17,13 @@
 #include <gralloc_priv.h>
 #include "gralloc_buffer_priv.h"
 
+bool am_gralloc_is_valid_graphic_buffer(
+    const native_handle_t * hnd) {
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer)
+        return true;
+    return false;
+}
 
 int am_gralloc_ext_get_ext_attr(struct private_handle_t * hnd,
     buf_attr attr, int * val) {
@@ -182,6 +189,24 @@ int am_gralloc_get_height(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
         return buffer->height;
+
+    return 0;
+}
+
+uint64_t am_gralloc_get_producer_usage(
+    const native_handle_t * hnd) {
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer)
+        return buffer->producer_usage;
+
+    return 0;
+}
+
+uint64_t am_gralloc_get_consumer_usage(
+    const native_handle_t * hnd) {
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer)
+        return buffer->consumer_usage;
 
     return 0;
 }

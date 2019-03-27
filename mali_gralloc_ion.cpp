@@ -685,14 +685,6 @@ int mali_gralloc_ion_device_close(struct hw_device_t *device)
 unsigned int am_pick_ion_heap(
 	buffer_descriptor_t *bufDescriptor, uint64_t usage)
 {
-#if BOARD_RESOLUTION_RATIO == 720
-	static unsigned int max_composer_buf_width = 1280;
-	static unsigned int max_composer_buf_height = 720;
-#else
-	static unsigned int max_composer_buf_width = 1920;
-	static unsigned int max_composer_buf_height = 1080;
-#endif
-
 	if (usage & GRALLOC_USAGE_HW_FB)
 	{
 		return ION_HEAP_TYPE_DMA;
@@ -708,6 +700,15 @@ unsigned int am_pick_ion_heap(
 		return ION_HEAP_TYPE_SYSTEM;
 	}
 
+#ifdef AML_ALLOC_SCANOUT_FOR_COMPOSE
+        #if BOARD_RESOLUTION_RATIO == 720
+            static unsigned int max_composer_buf_width = 1280;
+            static unsigned int max_composer_buf_height = 720;
+        #else
+            static unsigned int max_composer_buf_width = 1920;
+            static unsigned int max_composer_buf_height = 1080;
+        #endif
+
 	if (usage & GRALLOC_USAGE_HW_COMPOSER)
 	{
 		if ( (bufDescriptor->width <= max_composer_buf_width) &&
@@ -716,6 +717,10 @@ unsigned int am_pick_ion_heap(
 			return ION_HEAP_TYPE_DMA;
 		}
 	}
+ #else
+        /*for compile warning.*/
+        bufDescriptor;
+#endif
 
 	return ION_HEAP_TYPE_SYSTEM;
 }
