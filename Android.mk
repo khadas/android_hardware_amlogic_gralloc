@@ -184,6 +184,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 
 LOCAL_C_INCLUDES += system/core/libion/include \
+	system/core/libion/kernel-headers \
+	system/core/libion/ \
 	system/core/libcutils/include
 
 LOCAL_SRC_FILES := \
