@@ -897,6 +897,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 	uint64_t usage;
 	uint32_t i = 0;
 	int err;
+	int64_t *req_wh = new int64_t[numDescriptors];
 
 	int yv12_align = YUV_MALI_PLANE_ALIGN;
 	int buffer_width;
@@ -915,6 +916,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		buffer_width = bufDescriptor->width;
 		usage = bufDescriptor->producer_usage | bufDescriptor->consumer_usage;
 
+		req_wh[i] = bufDescriptor->width | (bufDescriptor->height << 16);
 #ifdef GRALLOC_AML_EXTEND
 #if PLATFORM_SDK_VERSION >= 24
 		if (am_gralloc_is_omx_metadata_extend_usage(usage))
@@ -934,6 +936,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		{
 			ALOGE("Unrecognized and/or unsupported format 0x%" PRIx64 " and usage 0x%" PRIx64,
 			      bufDescriptor->hal_format, usage);
+			delete []req_wh;
 			return -EINVAL;
 		}
 		/*
@@ -999,6 +1002,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			{
 				ALOGD("format 0x%" PRIx64 " and usage 0x%" PRIx64,
 			      base_format, usage);
+				delete []req_wh;
 				return -EINVAL;
 			}
 			get_rgb_stride_and_size(bufDescriptor->width, bufDescriptor->height, 3, &bufDescriptor->pixel_stride,
@@ -1039,6 +1043,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			                              &bufDescriptor->byte_stride, &bufDescriptor->size, alloc_type,
 			                              &bufDescriptor->internalHeight, yv12_align))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 #ifdef GRALLOC_AML_EXTEND
@@ -1060,6 +1065,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			                                     &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 			                                     &bufDescriptor->size))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1072,6 +1078,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		case HAL_PIXEL_FORMAT_BLOB:
 			if (alloc_type != UNCOMPRESSED)
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1090,6 +1097,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 				        bufDescriptor->width, bufDescriptor->height, &bufDescriptor->pixel_stride,
 				        &bufDescriptor->byte_stride, &bufDescriptor->size, alloc_type, &bufDescriptor->internalHeight))
 				{
+					delete []req_wh;
 					return -EINVAL;
 				}
 			}
@@ -1099,6 +1107,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 				                                  &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 				                                  &bufDescriptor->size))
 				{
+					delete []req_wh;
 					return -EINVAL;
 				}
 			}
@@ -1113,6 +1122,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			                                  &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 			                                  &bufDescriptor->size))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1126,6 +1136,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			                                  &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 			                                  &bufDescriptor->size))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1140,6 +1151,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 				                                           &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 				                                           &bufDescriptor->size, alloc_type))
 				{
+					delete []req_wh;
 					return -EINVAL;
 				}
 			}
@@ -1149,6 +1161,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 				                                  &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 				                                  &bufDescriptor->size))
 				{
+					delete []req_wh;
 					return -EINVAL;
 				}
 			}
@@ -1162,6 +1175,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			    !get_yuv_y410_stride_and_size(bufDescriptor->width, bufDescriptor->height, &bufDescriptor->pixel_stride,
 			                                  &bufDescriptor->byte_stride, &bufDescriptor->size))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1178,6 +1192,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			                                          &bufDescriptor->pixel_stride, &bufDescriptor->byte_stride,
 			                                          &bufDescriptor->size, alloc_type))
 			{
+				delete []req_wh;
 				return -EINVAL;
 			}
 
@@ -1189,6 +1204,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		 */
 		default:
 			AERR("unsupport format 0x%" PRIx64, base_format);
+			delete []req_wh;
 			return -EINVAL;
 		}
 
@@ -1225,6 +1241,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		if (err < 0)
 		{
 			ALOGE("mali_gralloc_ion_allocate return error");
+			delete []req_wh;
 			return err;
 		}
 	}
@@ -1248,6 +1265,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			ALOGE("gralloc_buffer_attr_allocate return error");
 			/* free all allocated ion buffer& attr buffer here.*/
 			mali_gralloc_buffer_free_internal(pHandle, numDescriptors);
+			delete []req_wh;
 			return err;
 		}
 
@@ -1288,6 +1306,9 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			/* each buffer will have an unique backing store id.*/
 			hnd->backing_store_id = getUniqueId();
 		}
+
+		hnd->req_width = req_wh[i] & 0xffff;
+		hnd->req_height = req_wh[i] >> 16;
 	}
 
 	if (NULL != shared_backend)
@@ -1295,6 +1316,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 		*shared_backend = shared;
 	}
 
+	delete []req_wh;
 	return 0;
 }
 

@@ -180,7 +180,7 @@ int am_gralloc_get_stride_in_pixel(const native_handle_t * hnd) {
 int am_gralloc_get_width(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
-        return buffer->width;
+        return buffer->req_width;
 
     return 0;
 }
@@ -188,7 +188,7 @@ int am_gralloc_get_width(const native_handle_t * hnd) {
 int am_gralloc_get_height(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
-        return buffer->height;
+        return buffer->req_height;
 
     return 0;
 }
