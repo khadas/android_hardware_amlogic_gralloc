@@ -719,24 +719,23 @@ int get_meson_dpu_gpu_caps()
 	{
 		osd_afbcd_enabled = atoi(osd_afbcd);
 	}
-	osd_afbcd_fd = open("/sys/class/graphics/fb0/osd_afbcd", O_RDWR);
-	if (osd_afbcd_fd < 0) {
-		ALOGD("errno=%d, %s", errno, strerror(errno));
-		return -EPERM;
+
+	if (osd_afbcd_enabled) {
+		osd_afbcd_fd = open("/sys/class/graphics/fb0/osd_afbcd", O_RDWR);
+		if (osd_afbcd_fd < 0) {
+			ALOGD("errno=%d, %s", errno, strerror(errno));
+			return -EPERM;
+		}
+
+		lseek(osd_afbcd_fd, 0, SEEK_SET);
+		read (osd_afbcd_fd, osd_afbcd, 1);
+		osd_afbcd_enabled = atoi(osd_afbcd);
+		close (osd_afbcd_fd);
+		osd_afbcd_fd = -1;
 	}
-
-	if (osd_afbcd_enabled)
-		write(osd_afbcd_fd, "1", 1);
-	else
-		write(osd_afbcd_fd, "0", 1);
-
-	lseek(osd_afbcd_fd, 0, SEEK_SET);
-	read (osd_afbcd_fd, osd_afbcd, 1);
-	osd_afbcd_enabled = atoi(osd_afbcd);
 	ALOGD("AFBC %s\n", osd_afbcd_enabled != 0? "enabled":"disabled");
 
-	close (osd_afbcd_fd);
-	osd_afbcd_fd = -1;
+	//TODO read from the osd_afbcd is 1 or 2.
 	if (osd_afbcd_enabled) {
 		/* Determine DPU format capabilities */
 		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT;
