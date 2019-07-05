@@ -712,6 +712,7 @@ int get_meson_dpu_gpu_caps()
 {
 	char osd_afbcd[PROPERTY_VALUE_MAX];
 	int  osd_afbcd_enabled = 0;
+	int  num_of_afbcd_type = 0;
 	char osd_afbcd_value[] = "00";
 	int  osd_afbcd_fd = -1;
 
@@ -729,14 +730,23 @@ int get_meson_dpu_gpu_caps()
 
 		lseek(osd_afbcd_fd, 0, SEEK_SET);
 		read (osd_afbcd_fd, osd_afbcd, 1);
-		osd_afbcd_enabled = atoi(osd_afbcd);
+		num_of_afbcd_type = atoi(osd_afbcd);
 		close (osd_afbcd_fd);
 		osd_afbcd_fd = -1;
 	}
-	ALOGD("AFBC %s\n", osd_afbcd_enabled != 0? "enabled":"disabled");
+	ALOGD("AFBC %s\n", num_of_afbcd_type != 0? "enabled":"disabled");
+	ALOGD("num of AFBC type %d\n", num_of_afbcd_type);
 
-	//TODO read from the osd_afbcd is 1 or 2.
-	if (osd_afbcd_enabled) {
+	if (1 == num_of_afbcd_type) {
+		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT;
+		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_BASIC;
+		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_SPLITBLK;
+
+		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_YUV_NOWRITE;
+		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT;
+		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_BASIC;
+		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_SPLITBLK;
+	} else if (2 == num_of_afbcd_type) {
 		/* Determine DPU format capabilities */
 		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT;
 		dpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_BASIC;
