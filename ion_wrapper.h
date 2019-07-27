@@ -52,4 +52,5 @@ int ion_is_legacy(int fd);
 
 __END_DECLS
 
+int ion_cache_invalid(int fd, int handle_fd);
 #endif /* __SYS_CORE_ION_H */
