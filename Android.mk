@@ -71,7 +71,9 @@ GRALLOC_VSYNC_BACKEND?=default
 # HAL module implemenation, not prelinked and stored in
 # hw/<OVERLAY_HARDWARE_MODULE_ID>.<ro.product.board>.so
 include $(CLEAR_VARS)
-include $(BUILD_SYSTEM)/version_defaults.mk
+# duplicated to the system env. Q cannot update the RO variables twice
+# include this make the build fail. never do the duplicated things.
+#include $(BUILD_SYSTEM)/version_defaults.mk
 
 ifneq ($(findstring $(GPU_ARCH), midgard bifrost),)
 	GRALLOC_INIT_AFBC = 1
