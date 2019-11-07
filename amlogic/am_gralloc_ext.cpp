@@ -8,6 +8,7 @@
  */
 
 #include "am_gralloc_ext.h"
+#include "am_gralloc_internal.h"
 #if USE_BUFFER_USAGE == 1
 #include <hardware/gralloc1.h>
 #else
@@ -22,6 +23,7 @@ Api default have upgrade to support gralloc 3.x.
 For legacy gralloc, need force enable GRALLOC_USE_GRALLOC1_API in file or mk.
 */
 //#define GRALLOC_USE_GRALLOC1_API 1
+#include <cutils/properties.h>
 
 bool am_gralloc_is_valid_graphic_buffer(
     const native_handle_t * hnd) {
@@ -286,11 +288,44 @@ bool am_gralloc_is_overlay_buffer(const native_handle_t * hnd) {
 
 bool am_gralloc_is_omx_metadata_buffer(
     const native_handle_t * hnd) {
-    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
-    if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX))
-        return true;
-
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX)) {
+        int val = 0;
+        am_gralloc_ext_get_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, &val);
+        if (val != AM_PRIV_ATTR_OMX_V4L_PRODUCER)
+            return true;
+    }
     return false;
+ }
+
+bool am_gralloc_is_omx_v4l_buffer(
+    const native_handle_t * hnd) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX)) {
+        int val = 0;
+        am_gralloc_ext_get_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, &val);
+        if (val == AM_PRIV_ATTR_OMX_V4L_PRODUCER)
+            return true;
+    }
+    return false;
+ }
+
+bool am_gralloc_is_video_dma_buffer(
+    const native_handle_t * hnd) {
+	private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+	char ionvideo_str[PROPERTY_VALUE_MAX];
+	int ionvideo_enable = 0;
+
+	if (property_get("vendor.ionvideo.enable", ionvideo_str, "0") >0)
+		ionvideo_enable = atoi(ionvideo_str);
+
+	if (ionvideo_enable && buffer && (am_gralloc_get_usage(hnd) & BufferUsage::VIDEO_DECODER) &&
+            (am_gralloc_get_usage(hnd) & BufferUsage::GPU_RENDER_TARGET))
+		return true;
+     return false;
  }
 
  int am_gralloc_get_omx_metadata_tunnel(
@@ -322,6 +357,39 @@ bool am_gralloc_is_omx_metadata_buffer(
     if (buffer) {
         ret = am_gralloc_ext_set_ext_attr(buffer,
             GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL, tunnel);
+    } else {
+        ret = GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    return ret;
+}
+
+ int am_gralloc_get_omx_video_type(
+    const native_handle_t * hnd, int * video_type) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    int ret = GRALLOC1_ERROR_NONE;
+    if (buffer) {
+        int val;
+        ret = am_gralloc_ext_get_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE, &val);
+        if (ret == GRALLOC1_ERROR_NONE) {
+            *video_type = val;
+        }
+    } else {
+        ret = GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    return ret;
+}
+
+ int am_gralloc_set_omx_video_type(
+    const native_handle_t * hnd, int video_type) {
+     private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+     int ret = GRALLOC1_ERROR_NONE;
+
+    if (buffer) {
+        ret = am_gralloc_ext_set_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE, video_type);
     } else {
         ret = GRALLOC1_ERROR_BAD_HANDLE;
     }
@@ -474,6 +542,56 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
     }
 
     return 0;
+}
+int am_gralloc_get_video_dma_buf_fd(const native_handle_t * hnd) {
+	private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer) {
+        return buffer->share_fd;
+    } else {
+        ALOGE("Current buffer is not dma buf.");
+    }
+
+    return -1;
+
+}
+
+int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd) {
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer && buffer->am_extend_type == AM_PRIV_EXTEND_OMX_V4L) {
+        return buffer->am_extend_fd;
+    } else {
+        ALOGE("Current buffer is not OMX_V4L extend.");
+    }
+
+    return -1;
+}
+
+int am_gralloc_attr_set_omx_v4l_producer_flag(
+    native_handle_t * hnd) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer) {
+        int val = AM_PRIV_ATTR_OMX_V4L_PRODUCER;
+        am_gralloc_ext_set_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
+    }
+
+    return -1;
+}
+
+int am_gralloc_attr_set_omx_pts_producer_flag(
+    native_handle_t * hnd) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer) {
+        int val = AM_PRIV_ATTR_OMX_PTS_PRODUCER;
+        am_gralloc_ext_set_ext_attr(buffer,
+            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
+    }
+
+    return -1;
 }
 
 #endif

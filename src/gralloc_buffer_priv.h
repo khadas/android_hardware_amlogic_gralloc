@@ -41,6 +41,8 @@ struct attr_region
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 	int am_omx_tunnel;
+	int am_omx_flag;
+	int am_omx_video_type;
 #endif
 //meson graphics changes end
 } __attribute__((packed));
@@ -184,6 +186,14 @@ static inline int gralloc_buffer_attr_write(struct private_handle_t *hnd, buf_at
 			region->dataspace = *((android_dataspace_t *)val);
 			rval = 0;
 			break;
+		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
+			region->am_omx_flag = *val;
+			rval = 0;
+			break;
+		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
+			region->am_omx_video_type = *val;
+			rval = 0;
+			break;	
 		}
 	}
 
@@ -237,6 +247,14 @@ static inline int gralloc_buffer_attr_read(struct private_handle_t *hnd, buf_att
 
 		case GRALLOC_ARM_BUFFER_ATTR_DATASPACE:
 			*val = region->dataspace;
+			rval = 0;
+			break;
+		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
+			*val = region->am_omx_flag;
+			rval = 0;
+			break;
+		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
+			*val = region->am_omx_video_type;
 			rval = 0;
 			break;
 		}

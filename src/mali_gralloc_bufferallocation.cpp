@@ -1055,6 +1055,9 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			mali_gralloc_buffer_free_internal(pHandle, numDescriptors);
 			return err;
 		}
+#ifdef GRALLOC_AML_EXTEND
+		am_gralloc_extend_attr_allocate(usage, hnd);
+#endif
 
 		mali_gralloc_dump_buffer_add(hnd);
 
@@ -1102,6 +1105,9 @@ int mali_gralloc_buffer_free(buffer_handle_t pHandle)
 
 	if (hnd != NULL)
 	{
+#ifdef GRALLOC_AML_EXTEND
+		am_gralloc_extend_attr_free(hnd);
+#endif
 		rval = gralloc_buffer_attr_free(hnd);
 		mali_gralloc_ion_free(hnd);
 	}
@@ -1118,6 +1124,9 @@ static int mali_gralloc_buffer_free_internal(buffer_handle_t *pHandle, uint32_t 
 	{
 		private_handle_t * const hnd = (private_handle_t * const)(pHandle[i]);
 
+#ifdef GRALLOC_AML_EXTEND
+		am_gralloc_extend_attr_free(hnd);
+#endif
 		err = gralloc_buffer_attr_free(hnd);
 		mali_gralloc_ion_free(hnd);
 	}

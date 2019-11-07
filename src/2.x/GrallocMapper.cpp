@@ -837,7 +837,7 @@ Return<void> GrallocMapper::getTransportSize(void* buffer, getTransportSize_cb h
 		return Void();
 	}
 
-	hidl_cb(Error::NONE, GRALLOC_ARM_NUM_FDS, NUM_INTS_IN_PRIVATE_HANDLE);
+	hidl_cb(Error::NONE, bufferHandle->numFds, bufferHandle->numInts);
 
 	return Void();
 }

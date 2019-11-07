@@ -50,8 +50,10 @@ struct fb_dmabuf_export
 
 /* Define number of shared file descriptors */
 #define GRALLOC_ARM_NUM_FDS 2
+/* FD number of amlogic */
+#define GRALLOC_AM_EXTEND_NUM_FDS 1
 
-#define NUM_INTS_IN_PRIVATE_HANDLE ((sizeof(struct private_handle_t) - sizeof(native_handle)) / sizeof(int) - GRALLOC_ARM_NUM_FDS)
+#define NUM_INTS_IN_PRIVATE_HANDLE ((sizeof(struct private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds)
 
 #define SZ_4K 0x00001000
 #define SZ_2M 0x00200000
@@ -170,6 +172,8 @@ struct private_handle_t
 	 */
 	int share_fd;
 	int share_attr_fd;
+        /*extend by aml for passing video buf.*/
+    int am_extend_fd;
 
 	// ints
 	int magic;
@@ -273,13 +277,14 @@ struct private_handle_t
 	int min_pgsz;
 
 //meson graphics changes start
-#ifdef GRALLOC_AML_EXTEND
+//#ifdef GRALLOC_AML_EXTEND
 	//for request width and height
 	uint32_t req_width;
 	uint32_t req_height;
+	uint32_t am_extend_type;
 	uint64_t padding_1;
 	uint64_t padding_2;
-#endif
+//#endif
 //meson graphics changes end
 #ifdef __cplusplus
 	/*
@@ -290,13 +295,14 @@ struct private_handle_t
 	 * number of integers that are conditionally included. Similar considerations apply
 	 * to the number of fds.
 	 */
-	static const int sNumFds = GRALLOC_ARM_NUM_FDS;
+	static const int sNumFds = GRALLOC_ARM_NUM_FDS + GRALLOC_AM_EXTEND_NUM_FDS;
 	static const int sMagic = 0x3141592;
 
 	private_handle_t(int _flags, int _size, void *_base, uint64_t _consumer_usage, uint64_t _producer_usage,
 	                 int fb_file, off_t fb_offset, int _byte_stride, int _width, int _height, uint64_t _alloc_format)
 	    : share_fd(-1)
 	    , share_attr_fd(-1)
+	    , am_extend_fd(-1)
 	    , magic(sMagic)
 	    , flags(_flags)
 	    , width(0)
@@ -319,6 +325,7 @@ struct private_handle_t
 	    , yuv_info(MALI_YUV_NO_INFO)
 	    , fd(fb_file)
 	    , offset(fb_offset)
+		, am_extend_type(0)
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
@@ -337,6 +344,7 @@ struct private_handle_t
 	                 int _backing_store_size, uint64_t _layer_count, plane_info_t _plane_info[MAX_PLANES])
 	    : share_fd(_shared_fd)
 	    , share_attr_fd(-1)
+        , am_extend_fd(-1)
 	    , magic(sMagic)
 	    , flags(_flags)
 	    , width(_width)
@@ -365,6 +373,7 @@ struct private_handle_t
 	    , fd(-1)
 	    , offset(0)
 	    , min_pgsz(_min_pgsz)
+		, am_extend_type(0)
 	{
 		version = sizeof(native_handle);
 //meson graphics changes start
@@ -394,7 +403,17 @@ struct private_handle_t
 		if (!h || h->version != sizeof(native_handle) || h->numInts != NUM_INTS_IN_PRIVATE_HANDLE ||
 		    h->numFds != sNumFds || hnd->magic != sMagic)
 		{
-			return -EINVAL;
+            if (h) {
+                ALOGD("version=0x%x, 0x%x"
+                        "numInts=%d, %d"
+                        "numFds=%d, %d"
+                        "magic=0x%x, %x\n",
+                        h->version, sizeof(native_handle),
+                        h->numInts, NUM_INTS_IN_PRIVATE_HANDLE,
+                        h->numFds, sNumFds,
+                        hnd->magic, sMagic);
+				return -EINVAL;
+            }
 		}
 
 		return 0;

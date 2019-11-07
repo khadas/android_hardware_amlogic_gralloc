@@ -675,8 +675,8 @@ static int32_t mali_gralloc1_get_transport_size(gralloc1_device_t* device, buffe
 		return GRALLOC1_ERROR_BAD_HANDLE;
 	}
 
-	*outNumFds = GRALLOC_ARM_NUM_FDS;
-	*outNumInts = NUM_INTS_IN_PRIVATE_HANDLE;
+    *outNumFds = hnd->sNumFds;
+    *outNumInts =(sizeof(struct private_handle_t) -sizeof(native_handle)) / sizeof(int) -hnd->sNumFds;
 
 	return GRALLOC1_ERROR_NONE;
 }
