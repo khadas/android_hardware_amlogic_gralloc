@@ -52,6 +52,7 @@ bool am_gralloc_is_coherent_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_overlay_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_omx_metadata_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_omx_v4l_buffer(const native_handle_t * hnd);
+bool am_gralloc_is_omx2_v4l2_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_video_dma_buffer(const native_handle_t *hnd);
 
 /*
@@ -115,11 +116,13 @@ Get/Set amlogic extend info.
 typedef enum {
     AM_PRIV_ATTR_OMX_PTS_PRODUCER = (1 << 0),
     AM_PRIV_ATTR_OMX_V4L_PRODUCER = (1 << 1),
+    AM_PRIV_ATTR_OMX2_V4L2_PRODUCER = (1 << 2),
 } AM_PRIV_ATTR_MASK;
 
 int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd);
 int am_gralloc_get_video_dma_buf_fd(const native_handle_t * hnd);
 int am_gralloc_attr_set_omx_v4l_producer_flag(native_handle_t * hnd);
+int am_gralloc_attr_set_omx2_v4l2_producer_flag(native_handle_t * hnd);
 int am_gralloc_attr_set_omx_pts_producer_flag(native_handle_t * hnd);
 
 #endif/*AM_GRALLOC_EXT_H*/

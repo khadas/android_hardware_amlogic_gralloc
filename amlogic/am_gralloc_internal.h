@@ -34,6 +34,7 @@ int am_gralloc_get_coherent_extend_flag();
 int am_gralloc_get_video_overlay_extend_flag();
 int am_gralloc_get_secure_extend_flag();
 int am_gralloc_alloc_v4lvideo_file();
+int am_gralloc_alloc_v4l2video_file();
 int am_gralloc_free_v4lvideo_file(int fd);
 
 /*

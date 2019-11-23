@@ -116,11 +116,14 @@ int am_gralloc_extend_attr_allocate(uint64_t usage,
     if (!hnd)
         return -1;
 
-    if (am_gralloc_is_omx_metadata_extend_usage(usage)) {
+    if (am_gralloc_is_omx_osd_extend_usage(usage)) {
+        hnd->am_extend_fd = am_gralloc_alloc_v4l2video_file();
+    } else if (am_gralloc_is_omx_metadata_extend_usage(usage)) {
         hnd->am_extend_fd = am_gralloc_alloc_v4lvideo_file();
-        if (hnd->am_extend_fd >= 0) {
-            hnd->am_extend_type = AM_PRIV_EXTEND_OMX_V4L;
-        }
+    }
+
+    if (hnd->am_extend_fd >= 0) {
+        hnd->am_extend_type = AM_PRIV_EXTEND_OMX_V4L;
     }
 
     /*Android always need valid fd.
@@ -155,6 +158,27 @@ int am_gralloc_alloc_v4lvideo_file() {
     int err = ioctl(v4ldev, V4LVIDEO_IOCTL_ALLOC_FD, &fd);
     if (err < 0) {
         ALOGE("call V4LVIDEO ioctl failed (%d).", err);
+        return -1;
+    }
+
+    if (fd < 0) {
+        ALOGE("V4LVIDEO_IOCTL_ALLOC_FD return invalid fd (%d).", fd);
+    }
+
+    return fd;
+}
+
+int am_gralloc_alloc_v4l2video_file() {
+    static int v4l2dev = open("/dev/video26", O_RDONLY | O_CLOEXEC);
+    if (v4l2dev < 0) {
+        ALOGE("open /dev/v4lvideo failed!\n");
+        return -1;
+    }
+
+    int fd = -1;
+    int err = ioctl(v4l2dev, V4LVIDEO_IOCTL_ALLOC_FD, &fd);
+    if (err < 0) {
+        ALOGE("call V4L2 ioctl failed (%d).", err);
         return -1;
     }
 
