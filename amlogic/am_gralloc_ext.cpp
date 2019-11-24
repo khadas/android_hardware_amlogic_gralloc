@@ -329,17 +329,17 @@ bool am_gralloc_is_omx2_v4l2_buffer(
 
 bool am_gralloc_is_video_dma_buffer(
     const native_handle_t * hnd) {
-	private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
-	char ionvideo_str[PROPERTY_VALUE_MAX];
-	int ionvideo_enable = 0;
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    char ionvideo_str[PROPERTY_VALUE_MAX];
+    int ionvideo_enable = 0;
 
-	if (property_get("vendor.ionvideo.enable", ionvideo_str, "0") >0)
-		ionvideo_enable = atoi(ionvideo_str);
+    if (property_get("vendor.ionvideo.enable", ionvideo_str, "0") >0)
+        ionvideo_enable = atoi(ionvideo_str);
 
-	if (ionvideo_enable && buffer && (am_gralloc_get_usage(hnd) & BufferUsage::VIDEO_DECODER) &&
-            (am_gralloc_get_usage(hnd) & BufferUsage::GPU_RENDER_TARGET))
-		return true;
-     return false;
+    if (ionvideo_enable && buffer && (am_gralloc_get_usage(hnd) & BufferUsage::VIDEO_DECODER) &&
+        (am_gralloc_get_usage(hnd) & BufferUsage::GPU_RENDER_TARGET))
+        return true;
+    return false;
  }
 
  int am_gralloc_get_omx_metadata_tunnel(
@@ -558,7 +558,7 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
     return 0;
 }
 int am_gralloc_get_video_dma_buf_fd(const native_handle_t * hnd) {
-	private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
 
     if (buffer) {
         return buffer->share_fd;
