@@ -1142,6 +1142,10 @@ void am_gralloc_set_ion_flags(ion_heap_type heap_type, uint64_t usage,
 		{
 			*priv_heap_flag |= coherent_buffer_flag;
 		}
+		else if (heap_type == ION_HEAP_TYPE_CUSTOM)
+		{
+			*priv_heap_flag |= coherent_buffer_flag;
+		}
 
 		/*Must check omx metadata first,
 		*for it have some same bits with video overlay.
