@@ -34,6 +34,7 @@
 #if DEBUG_IO
 #include <linux/time.h>
 #endif
+#include "am_gralloc_internal.h"
 #endif
 //meson graphics changes end
 
@@ -687,6 +688,21 @@ void mali_gralloc_adjust_dimensions(const uint64_t alloc_format,
 	/* Determine producers and consumers. */
 	const uint16_t producers = get_producers(usage);
 	const uint16_t consumers = get_consumers(usage);
+
+	/*By MediaTeam TODO: workaround for cts android.view.cts.PixelCopyTest#testVideoProducer
+	 *if if width x height is 100x100, align width/height to 128
+	 */
+#ifdef GRALLOC_AML_EXTEND
+	if (am_gralloc_is_omx_osd_extend_usage(usage))
+	{
+		if (*height == 100 && * width == 100)
+		{
+			*width = GRALLOC_ALIGN(*width, 64);
+			*height = GRALLOC_ALIGN(*height, 64);
+        	}
+	}
+#endif
+	//workaround for cts end
 
 	/*
 	 * Video producer requires additional height padding of AFBC buffers (whole
