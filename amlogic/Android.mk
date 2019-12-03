@@ -29,7 +29,7 @@ LOCAL_CFLAGS += -DGRALLOC_AML_EXTEND
 LOCAL_C_INCLUDES := \
 	system/core/libutils/include \
 	hardware/libhardware/include \
-	system/core/libion/kernel-headers \
+	system/memory/libion/kernel-headers \
 	hardware/amlogic/gralloc/src
 
 LOCAL_SRC_FILES := \
