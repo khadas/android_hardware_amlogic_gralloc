@@ -285,7 +285,7 @@ struct private_handle_t
 	uint32_t req_width;
 	uint32_t req_height;
 	uint32_t am_extend_type;
-	uint32_t unused1;
+	uint32_t ion_delay_alloc;
 	uint64_t padding_1;
 	uint64_t padding_2;
 #endif
@@ -333,6 +333,7 @@ struct private_handle_t
 	    , offset(fb_offset)
 #ifdef GRALLOC_AML_EXTEND
 	    , am_extend_type(0)
+	    , ion_delay_alloc(0)
 #endif
 	{
 		version = sizeof(native_handle);
@@ -385,6 +386,7 @@ struct private_handle_t
 	    , min_pgsz(_min_pgsz)
 #ifdef GRALLOC_AML_EXTEND
 	    , am_extend_type(0)
+	    , ion_delay_alloc(0)
 #endif
 	{
 		version = sizeof(native_handle);
