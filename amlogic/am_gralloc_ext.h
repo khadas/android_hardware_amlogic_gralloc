@@ -122,5 +122,6 @@ int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd);
 int am_gralloc_attr_set_omx_v4l_producer_flag(native_handle_t * hnd);
 int am_gralloc_attr_set_omx2_v4l2_producer_flag(native_handle_t * hnd);
 int am_gralloc_attr_set_omx_pts_producer_flag(native_handle_t * hnd);
+uint64_t am_gralloc_get_enc_coherent_usage();
 
 #endif/*AM_GRALLOC_EXT_H*/

@@ -169,20 +169,11 @@ int am_gralloc_get_buffer_fd(const native_handle_t * hnd) {
     return -1;
 }
 
-
 #ifdef GRALLOC_USE_GRALLOC1_API
 int am_gralloc_get_stride_in_byte(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
         return buffer->byte_stride;
-
-    return 0;
-}
-
-int am_gralloc_get_stride_in_pixel(const native_handle_t * hnd) {
-    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
-    if (buffer)
-        return buffer->stride;
 
     return 0;
 }
@@ -194,15 +185,15 @@ int am_gralloc_get_stride_in_byte(const native_handle_t * hnd) {
 
     return 0;
 }
+#endif
 
 int am_gralloc_get_stride_in_pixel(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
-        return buffer->plane_info[0].alloc_width;
+        return buffer->stride;
 
     return 0;
 }
-#endif
 
 int am_gralloc_get_width(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
@@ -595,3 +586,7 @@ int am_gralloc_attr_set_omx_pts_producer_flag(
 }
 
 #endif
+
+uint64_t am_gralloc_get_enc_coherent_usage() {
+    return am_gralloc_get_omx_osd_producer_usage();
+}
