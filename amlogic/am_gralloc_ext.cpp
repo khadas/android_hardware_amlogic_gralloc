@@ -449,6 +449,32 @@ int am_gralloc_destroy_sideband_handle(native_handle_t * hnd) {
     return ret;
 }
 
+int am_gralloc_get_sideband_type(const native_handle_t* hnd, int* type) {
+    if (!hnd || hnd->version != sizeof(native_handle_t)
+            || hnd->numInts != AM_SIDEBAND_HANDLE_NUM_INT
+            || hnd->numFds != AM_SIDEBAND_HANDLE_NUM_FD) {
+        return GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    const am_sideband_handle_t * buffer = (am_sideband_handle_t *)(hnd);
+    if (buffer->id != AM_SIDEBAND_IDENTIFIER)
+        return GRALLOC1_ERROR_BAD_HANDLE;
+
+    int ret = GRALLOC1_ERROR_NONE;
+    if (buffer) {
+        if (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OVERLAY) {
+            *type = AM_TV_SIDEBAND;
+        } else if (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX) {
+            *type = AM_OMX_SIDEBAND;
+        } else if (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_AMCODEX) {
+            *type = AM_AMCODEX_SIDEBAND;
+        } else {
+            ret = GRALLOC1_ERROR_BAD_HANDLE;
+        }
+    }
+    return ret;
+}
+
 #ifdef GRALLOC_USE_GRALLOC1_API
 int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;

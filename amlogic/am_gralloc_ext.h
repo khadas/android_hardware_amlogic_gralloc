@@ -72,7 +72,8 @@ For modules create sideband handle.
 typedef enum {
     AM_TV_SIDEBAND = 1,
     AM_OMX_SIDEBAND = 2,
-    AM_AMCODEX_SIDEBAND = 3
+    AM_AMCODEX_SIDEBAND = 3,
+    AM_INVALID_SIDEBAND = 0xff
 } AM_SIDEBAND_TYPE;
 
 typedef enum {
@@ -94,6 +95,7 @@ typedef enum {
 native_handle_t * am_gralloc_create_sideband_handle(int type, int channel);
 int am_gralloc_destroy_sideband_handle(native_handle_t * hnd);
 int am_gralloc_get_sideband_channel(const native_handle_t * hnd, int * channel);
+int am_gralloc_get_sideband_type(const native_handle_t* hnd, int* type);
 
 
 /*
