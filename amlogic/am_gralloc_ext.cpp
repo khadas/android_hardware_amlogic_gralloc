@@ -318,6 +318,17 @@ bool am_gralloc_is_omx2_v4l2_buffer(
     return false;
  }
 
+bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+
+    if (buffer) {
+        int delay_alloc = buffer->ion_delay_alloc;
+        if (delay_alloc)
+            return true;
+    }
+    return false;
+}
+
  int am_gralloc_get_omx_metadata_tunnel(
     const native_handle_t * hnd, int * tunnel) {
     private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
