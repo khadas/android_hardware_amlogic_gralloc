@@ -44,7 +44,7 @@ typedef enum {
     AM_PRIV_EXTEND_OMX_V4L = 1,
 } AM_PRIV_EXTEND_FLAG;
 
-int am_gralloc_extend_attr_allocate(uint64_t usage, private_handle_t *hnd);
+int am_gralloc_extend_attr_allocate(uint64_t usage);
 int am_gralloc_extend_attr_free(private_handle_t *hnd);
 
 #endif/*AM_GRALLOC_EXT_INTERNAL_H*/

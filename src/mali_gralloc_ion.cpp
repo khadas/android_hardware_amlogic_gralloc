@@ -859,7 +859,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 		am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
-		am_extend_fd = am_gralloc_alloc_v4lvideo_file();
+		am_extend_fd = am_gralloc_extend_attr_allocate(usage);
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 					am_gralloc_is_omx_metadata_extend_usage(usage)) {
 
@@ -992,7 +992,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 			am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
-			am_extend_fd = am_gralloc_alloc_v4lvideo_file();
+			am_extend_fd = am_gralloc_extend_attr_allocate(usage);
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 					am_gralloc_is_omx_metadata_extend_usage(usage)) {
 

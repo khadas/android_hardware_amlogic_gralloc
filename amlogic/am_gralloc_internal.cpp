@@ -111,30 +111,15 @@ int am_gralloc_get_secure_extend_flag() {
     return private_handle_t::PRIV_FLAGS_SECURE_PROTECTED;
 }
 
-int am_gralloc_extend_attr_allocate(uint64_t usage,
-    private_handle_t *hnd) {
-    if (!hnd)
-        return -1;
-
+int am_gralloc_extend_attr_allocate(uint64_t usage) {
+    int am_extend_fd  = -1;
     if (am_gralloc_is_omx_osd_extend_usage(usage)) {
-        hnd->am_extend_fd = am_gralloc_alloc_v4l2video_file();
+        am_extend_fd = am_gralloc_alloc_v4l2video_file();
     } else if (am_gralloc_is_omx_metadata_extend_usage(usage)) {
-        hnd->am_extend_fd = am_gralloc_alloc_v4lvideo_file();
+        am_extend_fd = am_gralloc_alloc_v4lvideo_file();
     }
 
-    if (hnd->am_extend_fd >= 0) {
-        hnd->am_extend_type = AM_PRIV_EXTEND_OMX_V4L;
-    }
-
-    /*Android always need valid fd.
-    So if no valid extend fd,just dup the shared fd.
-    */
-    if (hnd->am_extend_fd < 0) {
-        hnd->am_extend_fd = ::dup(hnd->share_fd);
-        hnd->am_extend_type = 0;
-    }
-
-    return 0;
+    return am_extend_fd;
 }
 
 int am_gralloc_extend_attr_free(private_handle_t *hnd) {
