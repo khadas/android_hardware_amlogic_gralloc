@@ -286,8 +286,11 @@ struct private_handle_t
 	uint32_t req_height;
 	uint32_t am_extend_type;
 	uint32_t ion_delay_alloc;
-	uint64_t padding_1;
+	uint32_t usage;
+	uint32_t padding_1;
 	uint64_t padding_2;
+#else
+#error "not define GRALLOC_AML_EXTEND"
 #endif
 //meson graphics changes end
 #ifdef __cplusplus
@@ -345,6 +348,10 @@ struct private_handle_t
 		plane_info[0].byte_stride = _byte_stride;
 		plane_info[0].alloc_width = _width;
 		plane_info[0].alloc_height = _height;
+#ifdef GRALLOC_AML_EXTEND
+		//only use the low 32bit;
+		usage = producer_usage | consumer_usage;
+#endif
 	}
 
 	private_handle_t(int _flags, int _size, int _min_pgsz, uint64_t _consumer_usage, uint64_t _producer_usage,
@@ -417,6 +424,8 @@ struct private_handle_t
 		if (!h || h->version != sizeof(native_handle) || h->numInts != NUM_INTS_IN_PRIVATE_HANDLE ||
 		    h->numFds != sNumFds || hnd->magic != sMagic)
 		{
+			ALOGD("version=%d, sizeof(native_handle)=%d, numInts=%d, %d, numFds=%d, sNumFds=%d magic=%x, %x\n",
+				   h->version, sizeof(native_handle), h->numInts, NUM_INTS_IN_PRIVATE_HANDLE, h->numFds, sNumFds, hnd->magic, sMagic);
 			return -EINVAL;
 		}
 

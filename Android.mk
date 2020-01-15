@@ -26,7 +26,7 @@ ifeq ($(GRALLOC_AML_EXTEND),1)
 BOARD_RESOLUTION_RATIO ?= 1080
 ifneq ($(GPU_ARCH),utgard)
 	GRALLOC_INIT_AFBC:=1
-	DGPU_FORMAT_LIMIT:=1
+	GPU_FORMAT_LIMIT:=1
 endif
 
 #arm gralloc config by amlogic

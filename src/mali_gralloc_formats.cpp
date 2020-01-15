@@ -1798,14 +1798,12 @@ uint64_t mali_gralloc_select_format(const uint64_t req_format,
   We have declared RGB10102 AND FP16 capacity in ip capacity.
   So this code should not needed, comment it and confirm later on utgard.
 */
-#if 0
 #if PLATFORM_SDK_VERSION >= 26 && defined(GPU_FORMAT_LIMIT) && (GPU_FORMAT_LIMIT==1)
     if ((HAL_PIXEL_FORMAT_RGBA_FP16 == req_format) ||
             (HAL_PIXEL_FORMAT_RGBA_1010102 == req_format)) {
 		///alloc_format = MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED;
 		goto out;
     }
-#endif
 #endif
 
 	if (req_base_format == MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED ||
