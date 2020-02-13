@@ -424,8 +424,8 @@ struct private_handle_t
 		if (!h || h->version != sizeof(native_handle) || h->numInts != NUM_INTS_IN_PRIVATE_HANDLE ||
 		    h->numFds != sNumFds || hnd->magic != sMagic)
 		{
-			ALOGD("version=%d, sizeof(native_handle)=%d, numInts=%d, %d, numFds=%d, sNumFds=%d magic=%x, %x\n",
-				   h->version, sizeof(native_handle), h->numInts, NUM_INTS_IN_PRIVATE_HANDLE, h->numFds, sNumFds, hnd->magic, sMagic);
+			//ALOGD("version=%d, sizeof(native_handle)=%d, numInts=%d, %d, numFds=%d, sNumFds=%d magic=%x, %x\n",
+			//	   h->version, sizeof(native_handle), h->numInts, NUM_INTS_IN_PRIVATE_HANDLE, h->numFds, sNumFds, hnd->magic, sMagic);
 			return -EINVAL;
 		}
 
