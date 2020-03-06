@@ -1588,8 +1588,8 @@ static uint64_t get_best_format(const uint32_t req_base_format,
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 		if (MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED == alloc_format) {
-			ALOGD("kkdebug, %x, %x, producer=%d, consumers=%d\n",
-					req_format_num_extn_bits, best_fmt_num_extn_bits, producers, consumers);
+			ALOGD("line%d, %x, %x, producer=%d, consumers=%d\n",
+					__LINE__, req_format_num_extn_bits, best_fmt_num_extn_bits, producers, consumers);
 			alloc_format = req_base_format;
 		}
 #endif

@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <cutils/native_handle.h>
-#include <utils/Log.h>
+//#include <utils/Log.h>
 
 /* As this file is included by clients, support GRALLOC_USE_GRALLOC1_API
  * flag for 0.3 and 1.0 clients. 2.x+ clients must set GRALLOC_VERSION_MAJOR,

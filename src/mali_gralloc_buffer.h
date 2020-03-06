@@ -290,7 +290,7 @@ struct private_handle_t
 	uint32_t padding_1;
 	uint64_t padding_2;
 #else
-#error "not define GRALLOC_AML_EXTEND"
+#error "gralloc_priv.h shall not be included"
 #endif
 //meson graphics changes end
 #ifdef __cplusplus
@@ -400,6 +400,8 @@ struct private_handle_t
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 		format  = _req_format;
+		//only use the low 32bit;
+		usage = _producer_usage | _consumer_usage;
 #endif
 //meson graphics changes end
 		numFds = sNumFds;
