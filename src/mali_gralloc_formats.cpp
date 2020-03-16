@@ -263,8 +263,11 @@ static void get_ip_capabilities(void)
 
 	if ((gpu_runtime_caps.caps_mask & MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT) == 0)
 	{
-#if MALI_GPU_SUPPORT_AFBC_BASIC == 1
+#ifdef GRALLOC_AML_EXTEND
+		/*Amlogic: gpu present by default*/
 		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_OPTIONS_PRESENT;
+#endif
+#if MALI_GPU_SUPPORT_AFBC_BASIC == 1
 		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_BASIC;
 		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_YUV_READ;
 		gpu_runtime_caps.caps_mask |= MALI_GRALLOC_FORMAT_CAPABILITY_PIXFMT_RGBA1010102;
