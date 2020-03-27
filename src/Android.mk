@@ -297,8 +297,13 @@ LOCAL_SRC_FILES := \
     mali_gralloc_ion.cpp \
     mali_gralloc_formats.cpp \
     mali_gralloc_reference.cpp \
-    mali_gralloc_debug.cpp \
-    format_info.cpp
+    mali_gralloc_debug.cpp
+
+ifeq ($(GPU_ARCH),utgard)
+LOCAL_SRC_FILES += format_info_utgard.cpp
+else
+LOCAL_SRC_FILES += format_info.cpp
+endif
 
 ifeq ($(GRALLOC_USE_LEGACY_CALCS_LOCK), 1)
 LOCAL_SRC_FILES += \

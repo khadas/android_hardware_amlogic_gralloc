@@ -1797,18 +1797,6 @@ uint64_t mali_gralloc_select_format(const uint64_t req_format,
 	const uint32_t req_base_format = get_base_format(req_format, usage, type, true);
 	const int32_t req_fmt_idx = get_format_index(req_base_format);
 
-/*meson graphics changes start
-  We have declared RGB10102 AND FP16 capacity in ip capacity.
-  So this code should not needed, comment it and confirm later on utgard.
-*/
-#if PLATFORM_SDK_VERSION >= 26 && defined(GPU_FORMAT_LIMIT) && (GPU_FORMAT_LIMIT==1)
-    if ((HAL_PIXEL_FORMAT_RGBA_FP16 == req_format) ||
-            (HAL_PIXEL_FORMAT_RGBA_1010102 == req_format)) {
-		///alloc_format = MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED;
-		goto out;
-    }
-#endif
-
 	if (req_base_format == MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED ||
 	    req_fmt_idx == -1)
 	{
