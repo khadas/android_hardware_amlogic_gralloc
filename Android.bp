@@ -30,6 +30,10 @@ cc_library_shared {
         "libcutils",
         "android.hardware.graphics.common@1.0",
     ],
+
+    export_include_dirs: [
+        "amlogic",
+    ],
 }
 
 cc_library_shared {
