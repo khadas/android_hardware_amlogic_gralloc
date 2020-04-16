@@ -35,6 +35,7 @@ const format_info_t formats[] = {
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_RGBA_8888,              .npln = 1, .ncmp = 4, .bps = 8,  .bpp_afbc = { 0, 0, 0 }, .bpp = { 32, 0, 0 }, .hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT, .tile_size = 1, .has_alpha = true,  .is_rgb = true,  .is_yuv = false, .afbc = false, .linear = true, .yuv_transform = true,  .flex = true,  },
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_BGRA_8888,              .npln = 1, .ncmp = 4, .bps = 8,  .bpp_afbc = { 0, 0, 0 }, .bpp = { 32, 0, 0 }, .hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT, .tile_size = 1, .has_alpha = true,  .is_rgb = true,  .is_yuv = false, .afbc = false, .linear = true, .yuv_transform = false, .flex = true,  },
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_RGBX_8888,              .npln = 1, .ncmp = 3, .bps = 8,  .bpp_afbc = { 0, 0, 0 }, .bpp = { 32, 0, 0 }, .hsub = 0, .vsub = 0, .align_w = 1, .align_h = 1, ALIGN_W_CPU_DEFAULT, .tile_size = 1, .has_alpha = false, .is_rgb = true,  .is_yuv = false, .afbc = false, .linear = true, .yuv_transform = true,  .flex = true,  },
+	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_Y16,                    .npln = 1, .ncmp = 1, .bps = 16, .bpp_afbc = { 0, 0, 0 },  .bpp = { 16, 0, 0 },  .hsub = 1, .vsub = 1, .align_w = 2, .align_h = 2, .align_w_cpu = 16,   .tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,  .afbc = false,  .linear = true,  .yuv_transform = false, .flex = true,  },
 
 	/* 420 (8-bit) */
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_YUV420_8BIT_I,          .npln = 1, .ncmp = 3, .bps = 8,  .bpp_afbc = { 0, 0, 0 }, .bpp = { 0, 0, 0 },  .hsub = 2, .vsub = 2, .align_w = 2, .align_h = 2, ALIGN_W_CPU_DEFAULT, .tile_size = 1, .has_alpha = false, .is_rgb = false, .is_yuv = true,  .afbc = false, .linear = false,.yuv_transform = false, .flex = false, },
@@ -65,6 +66,7 @@ const format_ip_support_t formats_ip_support[] = {
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_RGBA_8888,     .cpu_wr = F_LIN, .cpu_rd = F_LIN, .gpu_wr = F_LIN, .gpu_rd = F_LIN, .dpu_wr = F_LIN,  .dpu_rd = F_LIN, .dpu_aeu_wr = F_NONE, .vpu_wr = F_NONE, .vpu_rd = F_LIN},
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_BGRA_8888,     .cpu_wr = F_LIN, .cpu_rd = F_LIN, .gpu_wr = S_LIN, .gpu_rd = S_LIN, .dpu_wr = F_LIN,  .dpu_rd = F_LIN, .dpu_aeu_wr = F_NONE, .vpu_wr = F_NONE, .vpu_rd = F_LIN},
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_RGBX_8888,     .cpu_wr = F_LIN, .cpu_rd = F_LIN, .gpu_wr = S_LIN, .gpu_rd = S_LIN, .dpu_wr = F_LIN,  .dpu_rd = F_LIN, .dpu_aeu_wr = F_NONE, .vpu_wr = F_NONE, .vpu_rd = F_LIN},
+	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_Y16,           .cpu_wr = F_LIN, .cpu_rd = F_LIN, .gpu_wr = F_NONE,.gpu_rd = F_NONE,.dpu_wr = F_NONE, .dpu_rd = F_NONE,.dpu_aeu_wr = F_NONE, .vpu_wr = F_NONE, .vpu_rd = F_NONE},
 
 	/* 420 (8-bit) */
 	{ .id = MALI_GRALLOC_FORMAT_INTERNAL_YUV420_8BIT_I, .cpu_wr = F_NONE,.cpu_rd = F_NONE,.gpu_wr = F_LIN, .gpu_rd = F_LIN, .dpu_wr = F_NONE, .dpu_rd = F_LIN, .dpu_aeu_wr = F_NONE, .vpu_wr = F_NONE, .vpu_rd = F_NONE},
@@ -114,6 +116,7 @@ static const hal_int_fmt hal_to_internal_format[] =
 	{ HAL_PIXEL_FORMAT_YCbCr_444_888,          true,  MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED },
 	{ HAL_PIXEL_FORMAT_FLEX_RGB_888,           true,  MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED },
 	{ HAL_PIXEL_FORMAT_FLEX_RGBA_8888,         true,  MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED },
+	{ HAL_PIXEL_FORMAT_Y16,                    false, MALI_GRALLOC_FORMAT_INTERNAL_Y16 },
 	{ HAL_PIXEL_FORMAT_YV12,                   false, MALI_GRALLOC_FORMAT_INTERNAL_YV12 },
 };
 
