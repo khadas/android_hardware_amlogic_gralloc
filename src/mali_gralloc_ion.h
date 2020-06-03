@@ -45,6 +45,8 @@ struct uvm_alloc_data {
 	uint32_t height;
 };
 
+#define UVM_IMM_ALLOC	(1 << 0)
+#define UVM_DELAY_ALLOC	(1 << 1)
 #define UVM_IOC_MAGIC 'U'
 #define UVM_IOC_ALLOC _IOWR(UVM_IOC_MAGIC, 0, \
 				struct uvm_alloc_data)

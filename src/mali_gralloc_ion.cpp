@@ -829,6 +829,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 	uint32_t delay_alloc = 0;
 	int am_extend_fd = 0;
 	int uvm_fd = -1;
+	uint32_t uvm_flags = 0;
 	int ret;
 #endif
 
@@ -869,8 +870,20 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
 		am_extend_fd = am_gralloc_extend_attr_allocate(usage);
+#if GRALLOC_USE_KERNEL54_ION == 0
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-					am_gralloc_is_omx_metadata_extend_usage(usage)) {
+				am_gralloc_is_omx_metadata_extend_usage(usage)) {
+				uvm_flags = 0;
+#else
+		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+			am_gralloc_is_omx_metadata_extend_usage(usage) ||
+			am_gralloc_is_omx_osd_extend_usage(usage)) {
+
+			if (am_gralloc_is_omx_osd_extend_usage(usage))
+				uvm_flags = UVM_IMM_ALLOC;
+			else
+				uvm_flags = UVM_DELAY_ALLOC;
+#endif
 
 			struct uvm_alloc_data uad = {
 				.size = (int)max_bufDescriptor->size,
@@ -878,7 +891,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.width = max_bufDescriptor->width,
 				.height = max_bufDescriptor->height,
 				.align = 0,
-				.flags = 0,
+				.flags = uvm_flags,
 				.v4l2_fd = am_extend_fd,
 			};
 
@@ -1002,16 +1015,27 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
 			am_extend_fd = am_gralloc_extend_attr_allocate(usage);
+#if GRALLOC_USE_KERNEL54_ION == 0
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 					am_gralloc_is_omx_metadata_extend_usage(usage)) {
+					uvm_flags = 0;
+#else
+			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+				am_gralloc_is_omx_metadata_extend_usage(usage) ||
+				am_gralloc_is_omx_osd_extend_usage(usage)) {
 
+				if (am_gralloc_is_omx_osd_extend_usage(usage))
+					uvm_flags = UVM_IMM_ALLOC;
+				else
+					uvm_flags = UVM_DELAY_ALLOC;
+#endif
 				struct uvm_alloc_data uad = {
 					.size = (int)bufDescriptor->size,
 					.byte_stride = bufDescriptor->pixel_stride,
 					.width = bufDescriptor->width,
 					.height = bufDescriptor->height,
 					.align = 0,
-					.flags = 0,
+					.flags = uvm_flags,
 					.v4l2_fd = am_extend_fd,
 				};
 
