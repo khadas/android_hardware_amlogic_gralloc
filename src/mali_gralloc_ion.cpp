@@ -26,8 +26,13 @@
 #include <log/log.h>
 #include <cutils/atomic.h>
 
-#include <ion/ion.h>
+#if GRALLOC_USE_KERNEL54_ION == 0
 #include <ion/ion_4.12.h>
+#include <ion/ion.h>
+#else
+#include "ion/ion_5.4.h"
+#include "ion/ion.h"
+#endif
 #include <linux/dma-buf.h>
 #include <vector>
 #include <sys/ioctl.h>
