@@ -31,7 +31,7 @@
 #include <ion/ion.h>
 #else
 #include "ion/ion_5.4.h"
-#include "ion/ion.h"
+#include "ion/ion_54.h"
 #endif
 #include <linux/dma-buf.h>
 #include <vector>
