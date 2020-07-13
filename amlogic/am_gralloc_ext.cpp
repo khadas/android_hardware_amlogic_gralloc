@@ -407,6 +407,8 @@ native_handle_t * am_gralloc_create_sideband_handle(int type, int channel) {
         pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_OMX;
     } else if (type == AM_AMCODEX_SIDEBAND) {
         pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_AMCODEX;
+    } else if (type == AM_FIXED_TUNNEL) {
+        pHnd->flags = private_handle_t::PRIV_FLAGS_VIDEO_TUNNEL;
     }
     pHnd->channel = channel;
 
@@ -465,6 +467,8 @@ int am_gralloc_get_sideband_type(const native_handle_t* hnd, int* type) {
             *type = AM_OMX_SIDEBAND;
         } else if (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_AMCODEX) {
             *type = AM_AMCODEX_SIDEBAND;
+        } else if (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_TUNNEL) {
+            *type = AM_FIXED_TUNNEL;
         } else {
             ret = GRALLOC1_ERROR_BAD_HANDLE;
         }

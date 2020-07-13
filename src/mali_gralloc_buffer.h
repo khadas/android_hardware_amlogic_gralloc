@@ -154,6 +154,7 @@ struct private_handle_t
 		//PRIV_FLAGS_OSD_VIDEO_OMX = 0x00000080,
 		PRIV_FLAGS_CONTINUOUS_BUF = 0x00000100,
 		PRIV_FLAGS_SECURE_PROTECTED = 0x00000200,
+		PRIV_FLAGS_VIDEO_TUNNEL = 0x00000400,
 #endif
 //meson graphics changes end
 	};

@@ -77,6 +77,11 @@ typedef enum {
 } AM_SIDEBAND_TYPE;
 
 typedef enum {
+    AM_FIXED_TUNNEL = 0xf1,
+    AM_INVALID_TUNNEL = 0Xff
+} AM_VIDEO_TUNNEL_TYPE;
+
+typedef enum {
     AM_VIDEO_DEFAULT = 1,
     AM_VIDEO_EXTERNAL = 2
 } AM_VIDEO_CHANNEL;
