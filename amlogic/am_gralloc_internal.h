@@ -33,18 +33,5 @@ int am_gralloc_get_omx_metadata_extend_flag();
 int am_gralloc_get_coherent_extend_flag();
 int am_gralloc_get_video_overlay_extend_flag();
 int am_gralloc_get_secure_extend_flag();
-int am_gralloc_alloc_v4lvideo_file();
-int am_gralloc_alloc_v4l2video_file();
-int am_gralloc_free_v4lvideo_file(int fd);
-
-/*
-Handle amlogic extend attrbuites.
-*/
-typedef enum {
-    AM_PRIV_EXTEND_OMX_V4L = 1,
-} AM_PRIV_EXTEND_FLAG;
-
-int am_gralloc_extend_attr_allocate(uint64_t usage);
-int am_gralloc_extend_attr_free(private_handle_t *hnd);
 
 #endif/*AM_GRALLOC_EXT_INTERNAL_H*/

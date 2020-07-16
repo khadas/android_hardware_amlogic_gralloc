@@ -26,13 +26,8 @@
 #include <log/log.h>
 #include <cutils/atomic.h>
 
-#if GRALLOC_USE_KERNEL54_ION == 0
-#include <ion/ion_4.12.h>
-#include <ion/ion.h>
-#else
 #include "ion/ion_5.4.h"
 #include "ion/ion_54.h"
-#endif
 #include <linux/dma-buf.h>
 #include <vector>
 #include <sys/ioctl.h>
@@ -827,7 +822,6 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 	int min_pgsz = 0;
 #ifdef GRALLOC_AML_EXTEND
 	uint32_t delay_alloc = 0;
-	int am_extend_fd = 0;
 	int uvm_fd = -1;
 	uint32_t uvm_flags = 0;
 	int ret;
@@ -869,21 +863,17 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 		am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
-		am_extend_fd = am_gralloc_extend_attr_allocate(usage);
-#if GRALLOC_USE_KERNEL54_ION == 0
-		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-				am_gralloc_is_omx_metadata_extend_usage(usage)) {
-				uvm_flags = 0;
-#else
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 			am_gralloc_is_omx_metadata_extend_usage(usage) ||
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
 
-			if (am_gralloc_is_omx_osd_extend_usage(usage))
+			if (am_gralloc_is_omx_osd_extend_usage(usage)) {
 				uvm_flags = UVM_IMM_ALLOC;
-			else
+				delay_alloc = 0;
+			} else {
 				uvm_flags = UVM_DELAY_ALLOC;
-#endif
+				delay_alloc = 1;
+			}
 
 			struct uvm_alloc_data uad = {
 				.size = (int)max_bufDescriptor->size,
@@ -892,15 +882,13 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.height = max_bufDescriptor->height,
 				.align = 0,
 				.flags = uvm_flags,
-				.v4l2_fd = am_extend_fd,
 			};
 
 			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
 			if (ret < 0)
 				return ret;
-			ALOGE("ioctl UVM_IOC_ALLOC fd sharefd: %d, %d.\n", uad.fd, am_extend_fd);
+			ALOGE("ioctl UVM_IOC_ALLOC fd sharefd: %d\n", uad.fd);
 			shared_fd = uad.fd;
-			delay_alloc = 1;
 		} else {
 			shared_fd = dev->alloc_from_ion_heap(usage, max_bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
 			delay_alloc = 0;
@@ -977,13 +965,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				return -1;
 			}
 
+#ifdef GRALLOC_AML_EXTEND
 			hnd->ion_delay_alloc = delay_alloc;
-			hnd->am_extend_fd = am_extend_fd;
-			hnd->am_extend_type = AM_PRIV_EXTEND_OMX_V4L;
-			if (hnd->am_extend_fd < 0) {
-				hnd->am_extend_fd = ::dup(hnd->share_fd);
-				hnd->am_extend_type = 0;
-			}
+			hnd->am_extend_fd = ::dup(hnd->share_fd);
+			hnd->am_extend_type = 0;
+#endif
 
 			pHandle[i] = hnd;
 		}
@@ -1014,21 +1000,17 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 			am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
-			am_extend_fd = am_gralloc_extend_attr_allocate(usage);
-#if GRALLOC_USE_KERNEL54_ION == 0
-			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-					am_gralloc_is_omx_metadata_extend_usage(usage)) {
-					uvm_flags = 0;
-#else
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 				am_gralloc_is_omx_metadata_extend_usage(usage) ||
 				am_gralloc_is_omx_osd_extend_usage(usage)) {
 
-				if (am_gralloc_is_omx_osd_extend_usage(usage))
+				if (am_gralloc_is_omx_osd_extend_usage(usage)) {
 					uvm_flags = UVM_IMM_ALLOC;
-				else
+					delay_alloc = 0;
+				} else {
 					uvm_flags = UVM_DELAY_ALLOC;
-#endif
+					delay_alloc = 1;
+				}
 				struct uvm_alloc_data uad = {
 					.size = (int)bufDescriptor->size,
 					.byte_stride = bufDescriptor->pixel_stride,
@@ -1036,14 +1018,12 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 					.height = bufDescriptor->height,
 					.align = 0,
 					.flags = uvm_flags,
-					.v4l2_fd = am_extend_fd,
 				};
 
 				ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
 				if (ret < 0)
 					return ret;
 				shared_fd = uad.fd;
-				delay_alloc = 1;
 			} else {
 				shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
 				delay_alloc = 0;
@@ -1083,13 +1063,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				return -1;
 			}
 
+#ifdef GRALLOC_AML_EXTEND
 			hnd->ion_delay_alloc = delay_alloc;
-			hnd->am_extend_fd = am_extend_fd;
-			hnd->am_extend_type = AM_PRIV_EXTEND_OMX_V4L;
-			if (hnd->am_extend_fd < 0) {
-				hnd->am_extend_fd = ::dup(hnd->share_fd);
-				hnd->am_extend_type = 0;
-			}
+			hnd->am_extend_fd = ::dup(hnd->share_fd);
+			hnd->am_extend_type = 0;
+#endif
 
 			pHandle[i] = hnd;
 		}

@@ -1098,7 +1098,10 @@ int mali_gralloc_buffer_free(buffer_handle_t pHandle)
 	if (hnd != NULL)
 	{
 #ifdef GRALLOC_AML_EXTEND
-		am_gralloc_extend_attr_free(hnd);
+		if (hnd->am_extend_fd >= 0) {
+			close(hnd->am_extend_fd);
+			hnd->am_extend_fd = -1;
+		}
 #endif
 		rval = gralloc_buffer_attr_free(hnd);
 		if (hnd->ion_delay_alloc)
@@ -1119,14 +1122,19 @@ static int mali_gralloc_buffer_free_internal(buffer_handle_t *pHandle, uint32_t 
 	{
 		private_handle_t * const hnd = (private_handle_t * const)(pHandle[i]);
 
+		if (hnd != NULL) {
 #ifdef GRALLOC_AML_EXTEND
-		am_gralloc_extend_attr_free(hnd);
+			if (hnd->am_extend_fd >= 0) {
+				close(hnd->am_extend_fd);
+				hnd->am_extend_fd = -1;
+			}
 #endif
-		err = gralloc_buffer_attr_free(hnd);
-		if (hnd->ion_delay_alloc)
-			close(hnd->share_fd);
-		else
-			mali_gralloc_ion_free(hnd);
+			err = gralloc_buffer_attr_free(hnd);
+			if (hnd->ion_delay_alloc)
+				close(hnd->share_fd);
+			else
+				mali_gralloc_ion_free(hnd);
+		}
 	}
 
 	return err;

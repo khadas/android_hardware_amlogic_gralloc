@@ -8,8 +8,7 @@
  */
 
 #include "am_gralloc_ext.h"
-#include "am_gralloc_internal.h"
-#if USE_BUFFER_USAGE == 1
+#if USE_BUFFER_USAGE
 #include <hardware/gralloc1.h>
 #else
 #include <hardware/gralloc.h>
@@ -98,33 +97,18 @@ bool am_gralloc_is_omx_metadata_producer(uint64_t usage) {
 }
 #else
 uint64_t am_gralloc_get_video_overlay_producer_usage() {
-#if USE_BUFFER_USAGE == 1
-    return GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER;
-#else
     return GRALLOC_USAGE_AML_VIDEO_OVERLAY;
-#endif
 }
 
 uint64_t am_gralloc_get_omx_metadata_producer_usage() {
-#if USE_BUFFER_USAGE == 1
-    return (GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER ||
-            GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN ||
-            GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN);
-#else
     return (GRALLOC_USAGE_AML_VIDEO_OVERLAY ||
             GRALLOC_USAGE_SW_READ_OFTEN ||
             GRALLOC_USAGE_SW_WRITE_OFTEN);
-#endif
 }
 
 uint64_t am_gralloc_get_omx_osd_producer_usage() {
-#if USE_BUFFER_USAGE == 1
-    return (GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER ||
-            GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET);
-#else
     return (GRALLOC_USAGE_AML_VIDEO_OVERLAY ||
             GRALLOC_USAGE_HW_RENDER);
-#endif
 }
 
 bool am_gralloc_is_omx_metadata_producer(uint64_t usage) {
@@ -304,14 +288,19 @@ bool am_gralloc_is_omx_v4l_buffer(
     return false;
  }
 
-bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd) {
-    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
+    uint64_t usage = am_gralloc_get_usage(hnd);
 
-    if (buffer) {
-        int delay_alloc = buffer->ion_delay_alloc;
-        if (delay_alloc)
-            return true;
+#if USE_BUFFER_USAGE
+    if (usage & GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER) {
+#else
+    if (usage & GRALLOC_USAGE_AML_OMX_OVERLAY ||
+        usage & GRALLOC_USAGE_AML_DMA_BUFFER ||
+        usage & GRALLOC_USAGE_AML_VIDEO_OVERLAY) {
+#endif
+        return true;
     }
+
     return false;
 }
 
@@ -564,7 +553,7 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
 int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
 
-    if (buffer && buffer->am_extend_type == AM_PRIV_EXTEND_OMX_V4L) {
+    if (buffer && buffer->am_extend_type == 0) {
         return buffer->am_extend_fd;
     } else {
         ALOGE("Current buffer is not OMX_V4L extend.");
