@@ -304,20 +304,6 @@ bool am_gralloc_is_omx_v4l_buffer(
     return false;
  }
 
-bool am_gralloc_is_omx2_v4l2_buffer(
-    const native_handle_t * hnd) {
-    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
-
-    if (buffer) {
-        int val = 0;
-        am_gralloc_ext_get_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, &val);
-        if (val == AM_PRIV_ATTR_OMX2_V4L2_PRODUCER)
-            return true;
-    }
-    return false;
- }
-
 bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd) {
     private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
 
@@ -589,19 +575,6 @@ int am_gralloc_attr_set_omx_v4l_producer_flag(
 
     if (buffer) {
         int val = AM_PRIV_ATTR_OMX_V4L_PRODUCER;
-        am_gralloc_ext_set_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
-    }
-
-    return -1;
-}
-
-int am_gralloc_attr_set_omx2_v4l2_producer_flag(
-    native_handle_t * hnd) {
-    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
-
-    if (buffer) {
-        int val = AM_PRIV_ATTR_OMX2_V4L2_PRODUCER;
         am_gralloc_ext_set_ext_attr(buffer,
             GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
     }

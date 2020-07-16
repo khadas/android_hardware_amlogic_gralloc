@@ -52,7 +52,6 @@ bool am_gralloc_is_coherent_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_overlay_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_omx_metadata_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_omx_v4l_buffer(const native_handle_t * hnd);
-bool am_gralloc_is_omx2_v4l2_buffer(const native_handle_t * hnd);
 bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd);
 
 /*
