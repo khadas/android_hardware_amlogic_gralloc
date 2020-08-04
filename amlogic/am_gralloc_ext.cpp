@@ -392,3 +392,24 @@ int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd) {
     return 0;
 }
 
+#define GRALLOC_EMPTY_FUN() \
+    ALOGD("ERR: %s: is a empty function", __func__)
+
+int am_gralloc_get_omx_v4l_file(
+        const native_handle_t * hnd __unused) {
+    GRALLOC_EMPTY_FUN();
+    return  -1;
+}
+
+int am_gralloc_attr_set_omx_v4l_producer_flag(
+        native_handle_t * hnd __unused) {
+    GRALLOC_EMPTY_FUN();
+    return -1;
+}
+
+int am_gralloc_set_omx_video_type(
+        const native_handle_t * hnd __unused,
+        int video_type __unused) {
+    GRALLOC_EMPTY_FUN();
+    return GRALLOC1_ERROR_BAD_HANDLE;
+}
