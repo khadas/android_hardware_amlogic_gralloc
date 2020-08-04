@@ -87,5 +87,14 @@ typedef enum {
 } vpu_afbc_mask;
 int am_gralloc_get_vpu_afbc_mask(const native_handle_t * hnd);
 
+/*
+Get/Set amlogic extend info
+*/
+int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd);
+int am_gralloc_attr_set_omx_v4l_producer_flag(native_handle_t * hnd);
+/*
+For modules to set omx video type.
+*/
+int am_gralloc_set_omx_video_type(const native_handle_t * hnd, int video_type);
 
 #endif/*AM_GRALLOC_EXT_H*/
