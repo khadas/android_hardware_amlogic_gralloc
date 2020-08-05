@@ -260,7 +260,7 @@ typedef enum
  * when Gralloc 1.0 defined GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER. However, libstagefright continues
  * (currently, Android P/9.0) to use this old combination of flags to indicate decoder producer
  */
-#define GRALLOC_USAGE_DECODER (GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_EXTERNAL_DISP)
+#define GRALLOC_USAGE_DECODER GRALLOC_USAGE_HW_VIDEO_DECODER
 
 static const uint64_t VALID_USAGE =
     GRALLOC_USAGE_SW_READ_MASK |       /* 0x0FU */
