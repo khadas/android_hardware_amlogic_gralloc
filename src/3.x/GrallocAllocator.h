@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2019-2020 ARM Limited. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,40 @@
 #ifndef ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V3_x_GRALLOC_H
 #define ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V3_x_GRALLOC_H
 
-#if HIDL_ALLOCATOR_VERSION_SCALED == 300
 #include <android/hardware/graphics/allocator/3.0/IAllocator.h>
-#endif
+#include "core/mali_gralloc_bufferdescriptor.h"
 
-#include "mali_gralloc_module.h"
-#include "mali_gralloc_bufferdescriptor.h"
-
-namespace android {
-namespace hardware {
-namespace graphics {
+namespace arm {
 namespace allocator {
-namespace HIDL_IALLOCATOR_NAMESPACE {
-namespace implementation {
 
 using android::hardware::graphics::mapper::V3_0::BufferDescriptor;
-using android::hardware::graphics::mapper::V3_0::Error;
+using android::hardware::graphics::allocator::V3_0::IAllocator;
+using android::hardware::Return;
+using android::hardware::hidl_handle;
 
 class GrallocAllocator : public IAllocator
 {
 public:
+	/**
+	 * IAllocator constructor. All the state information required for the Gralloc
+	 * private module is populated in its default constructor. Gralloc 3.0 specific
+	 * state information can be populated here.
+	 */
 	GrallocAllocator();
+
+	/**
+	 * IAllocator destructor. All the resources acquired for Gralloc private module
+	 * are released
+	 */
 	virtual ~GrallocAllocator();
 
-	/* Override IAllocator interface */
+	/* Override IAllocator 3.0 interface */
 	Return<void> dumpDebugInfo(dumpDebugInfo_cb hidl_cb) override;
 	Return<void> allocate(const BufferDescriptor& descriptor, uint32_t count,
 	                      allocate_cb hidl_cb) override;
-private:
-	struct private_module_t privateModule;
 };
 
-extern "C" IAllocator* HIDL_FETCH_IAllocator(const char* name);
-
-} // namespace implementation
-} // namespace HIDL_IALLOCATOR_NAMESPACE
 } // namespace allocator
-} // namespace graphics
-} // namespace hardware
-} // namespace android
+} // namespace arm
 
 #endif // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V3_x_GRALLOC_H

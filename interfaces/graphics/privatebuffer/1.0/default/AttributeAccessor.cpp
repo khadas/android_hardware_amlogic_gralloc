@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Arm Limited.
+ * Copyright (C) 2019-2020 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  */
 
 #include "AttributeAccessor.h"
-#include "../../../../../src/gralloc_buffer_priv.h"
+#include "gralloc_buffer_priv.h"
 
 #include <assert.h>
 #include <inttypes.h>

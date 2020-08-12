@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2010-2020 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -21,24 +21,9 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
-#include <android/log.h>
+#include <sys/user.h>
 
-#ifndef AWAR
-#define AWAR(fmt, args...) \
-	__android_log_print(ANDROID_LOG_WARN, "[Gralloc-Warning]", "%s:%d " fmt, __func__, __LINE__, ##args)
-#endif
-#ifndef AINF
-#define AINF(fmt, args...) __android_log_print(ANDROID_LOG_INFO, "[Gralloc]", fmt, ##args)
-#endif
-#ifndef AERR
-#define AERR(fmt, args...) \
-	__android_log_print(ANDROID_LOG_ERROR, "[Gralloc-ERROR]", "%s:%d " fmt, __func__, __LINE__, ##args)
-#endif
-#ifndef AERR_IF
-#define AERR_IF(eq, fmt, args...) \
-	if ((eq))                     \
-	AERR(fmt, args)
-#endif
+#include "mali_gralloc_log.h"
 
 #define GRALLOC_ALIGN(value, base) ((((value) + (base) -1) / (base)) * (base))
 

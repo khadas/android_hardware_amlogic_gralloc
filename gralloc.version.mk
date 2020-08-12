@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2019 ARM Limited. All rights reserved.
+# Copyright (C) 2016-2020 Arm Limited. All rights reserved.
 #
 # Copyright (C) 2008 The Android Open Source Project
 #
@@ -17,20 +17,18 @@
 
 PLATFORM_SDK_GREATER_THAN_28 := $(shell expr $(PLATFORM_SDK_VERSION) \> 28)
 
+GRALLOC_EXPERIMENTAL ?=1
+
 # Set default Gralloc version for the platform, but allow this to be overriden.
 ifeq ($(PLATFORM_SDK_GREATER_THAN_28), 1)
     GRALLOC_API_VERSION?=3.x
 else
-    GRALLOC_API_VERSION?=1.x
+    GRALLOC_API_VERSION?=2.x
 endif
 
 ifdef GRALLOC_USE_GRALLOC1_API
     ifeq ($(GRALLOC_USE_GRALLOC1_API), 1)
         GRALLOC_API_VERSION := 1.x
-    else
-        ifeq ($(GRALLOC_USE_GRALLOC1_API), 0)
-            GRALLOC_API_VERSION := 0.x
-        endif
     endif
 endif
 
@@ -40,6 +38,11 @@ ifeq ($(PLATFORM_SDK_GREATER_THAN_28), 1)
 else
     GRALLOC_VALID_VERSIONS := 1.x 2.x
 endif
+
+ifeq ($(GRALLOC_EXPERIMENTAL), 1)
+    GRALLOC_VALID_VERSIONS += 4.x
+endif
+
 ifeq ($(filter $(GRALLOC_API_VERSION),$(GRALLOC_VALID_VERSIONS)),)
     $(error Gralloc version $(GRALLOC_API_VERSION) is not valid on the current platform. Valid versions are $(GRALLOC_VALID_VERSIONS))
 endif
@@ -49,24 +52,22 @@ endif
 #       changed (somewhat) independently of each other. Scaled internal versions, encapsulating
 #       their major and minor versions, provide for building specific combinations
 ifeq ($(GRALLOC_API_VERSION), 2.x)
-    HIDL_IMAPPER_NAMESPACE := V2_1
-    HIDL_IALLOCATOR_NAMESPACE := V2_0
-    HIDL_COMMON_NAMESPACE := V1_1
-
-    #Allocator = 2.0, Mapper = 2.1 and Common = 1.1
+    $(info Building Gralloc 2.x on platform SDK version $(PLATFORM_SDK_VERSION))
+    # Allocator = 2.0, Mapper = 2.1 and Common = 1.1
     HIDL_ALLOCATOR_VERSION_SCALED := 200
     HIDL_MAPPER_VERSION_SCALED := 210
     HIDL_COMMON_VERSION_SCALED := 110
 else ifeq ($(GRALLOC_API_VERSION), 3.x)
     $(info Building Gralloc 3.x on platform SDK version $(PLATFORM_SDK_VERSION))
-
-    HIDL_IMAPPER_NAMESPACE := V3_0
-    HIDL_IALLOCATOR_NAMESPACE := V3_0
-    HIDL_COMMON_NAMESPACE := V1_2
-
-    #Allocator = 3.0, Mapper = 3.0 and Common = 1.2
+    # Allocator = 3.0, Mapper = 3.0 and Common = 1.2
     HIDL_ALLOCATOR_VERSION_SCALED := 300
     HIDL_MAPPER_VERSION_SCALED := 300
+    HIDL_COMMON_VERSION_SCALED := 120
+else ifeq ($(GRALLOC_API_VERSION), 4.x)
+    $(info Building Gralloc 4.x on platform SDK version $(PLATFORM_SDK_VERSION))
+    #Allocator = 4.0, Mapper = 4.0 and Common = 1.2
+    HIDL_ALLOCATOR_VERSION_SCALED := 400
+    HIDL_MAPPER_VERSION_SCALED := 400
     HIDL_COMMON_VERSION_SCALED := 120
 endif
 

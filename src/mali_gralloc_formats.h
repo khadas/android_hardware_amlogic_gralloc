@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2016-2020 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -20,7 +20,8 @@
 #define MALI_GRALLOC_FORMATS_H_
 
 #include <system/graphics.h>
-#include <log/log.h>
+
+#include "mali_gralloc_log.h"
 
 /* Internal formats are represented in gralloc as a 64bit identifier
  * where the 32 lower bits are a base format and the 32 upper bits are modifiers.
@@ -119,7 +120,7 @@ typedef enum
 	MALI_GRALLOC_FORMAT_INTERNAL_YUV420_10BIT_I,
 	MALI_GRALLOC_FORMAT_INTERNAL_YUV444_10BIT_I,
 
-	/* Add more internal formats here. Make sure decode_internal_format() is updated. */
+	/* Add more internal formats here. */
 
 	/* These are legacy 0.3 gralloc formats used only by the wrap/unwrap macros. */
 	MALI_GRALLOC_FORMAT_INTERNAL_YV12_WRAP,
@@ -129,37 +130,46 @@ typedef enum
 	MALI_GRALLOC_FORMAT_INTERNAL_RANGE_LAST,
 } mali_gralloc_pixel_format;
 
-
-/* Modifier Bits - these are now independent. */
+/*
+ * Compression type
+ */
 
 /* This format will use AFBC */
 #define MALI_GRALLOC_INTFMT_AFBC_BASIC (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 0))
 
+
+/*
+ * AFBC modifier bits (valid with MALI_GRALLOC_INTFMT_AFBC_BASIC)
+ */
+
 /* This format uses AFBC split block mode */
-#define MALI_GRALLOC_INTFMT_AFBC_SPLITBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 1))
+#define MALI_GRALLOC_INTFMT_AFBC_SPLITBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 2))
 
 /* This format uses AFBC wide block mode */
-#define MALI_GRALLOC_INTFMT_AFBC_WIDEBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 2))
+#define MALI_GRALLOC_INTFMT_AFBC_WIDEBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 3))
 
 /* This format uses AFBC tiled headers */
-#define MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 3))
+#define MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 4))
 
 /* This format uses AFBC extra wide superblocks. */
-#define MALI_GRALLOC_INTFMT_AFBC_EXTRAWIDEBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 4))
+#define MALI_GRALLOC_INTFMT_AFBC_EXTRAWIDEBLK (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 5))
 
 /* This format is AFBC with double body buffer (used as a frontbuffer) */
-#define MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 5))
+#define MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 6))
 
 /* This format uses AFBC buffer content hints in LSB of superblock offset. */
-#define MALI_GRALLOC_INTFMT_AFBC_BCH (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 6))
+#define MALI_GRALLOC_INTFMT_AFBC_BCH (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 7))
 
-/* This format uses AFBC with YUV transform.
- * This is automatically enabled, and should not be set with GRALLOC_USAGE_PRIVATE_3. */
-#define MALI_GRALLOC_INTFMT_AFBC_YUV_TRANSFORM (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 7))
+/* This format uses AFBC with YUV transform. */
+#define MALI_GRALLOC_INTFMT_AFBC_YUV_TRANSFORM (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 8))
+
+/* This format uses Sparse allocated AFBC. */
+#define MALI_GRALLOC_INTFMT_AFBC_SPARSE (1ULL << (MALI_GRALLOC_INTFMT_EXTENSION_BIT_START + 9))
 
 /* This mask should be used to check or clear support for AFBC for an internal format.
  */
 #define MALI_GRALLOC_INTFMT_AFBCENABLE_MASK (uint64_t)(MALI_GRALLOC_INTFMT_AFBC_BASIC)
+
 
 /* These are legacy Gralloc 0.3 support macros for passing private formats through the 0.3 alloc interface.
  * It packs modifier bits together with base format into a 32 bit format identifier.
@@ -197,7 +207,7 @@ static inline int mali_gralloc_format_wrapper(int format, int modifiers)
 	if (format & ~MALI_GRALLOC_INTFMT_FMT_WRAP_MASK)
 	{
 		format = MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED;
-		ALOGE("Format is too large for private format wrapping");
+		MALI_GRALLOC_LOGE("Format is too large for private format wrapping");
 	}
 
 	return (modifiers | format);
@@ -227,53 +237,62 @@ static inline uint64_t mali_gralloc_format_unwrap(int x)
 	return (modifiers | base_format);
 }
 
+/*
+ * Macro to add additional modifier(s) to existing wrapped private format.
+ * Arguments include wrapped private format and new modifier(s) to add.
+ */
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(x, modifiers) \
+	((int)((x) | ((unsigned)((modifiers) >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+
+/*
+ * Macro to remove modifier(s) to existing wrapped private format.
+ * Arguments include wrapped private format and modifier(s) to remove.
+ */
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_REMOVE_MODIFIER(x, modifiers) \
+	((int)((x) & ~((unsigned)((modifiers) >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
 
 #define GRALLOC_PRIVATE_FORMAT_WRAPPER(x) (mali_gralloc_format_wrapper(x, 0))
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x) (mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT)))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x)                                                           \
+	mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_BASIC | MALI_GRALLOC_INTFMT_AFBC_SPARSE) >> \
+	                                   MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_SPLITBLK(x) \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_SPLITBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_SPLITBLK(x)                                 \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_SPLITBLK)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDEBLK(x) \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_WIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDEBLK(x)                                  \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_WIDEBLK)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDE_SPLIT(x) \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_WIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_SPLITBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDE_SPLIT(x)                                        \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_SPLITBLK(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_WIDEBLK)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_BASIC(x)                   \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT)))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_BASIC(x)                      \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_WIDE(x)                    \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_WIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_WIDE(x)                               \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDEBLK(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_SPLIT(x) \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_SPLITBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_SPLIT(x)                               \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_SPLITBLK(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_WIDE_SPLIT(x) \
-		(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_WIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_SPLITBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-		                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_WIDE_SPLIT(x)                            \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDE_SPLIT(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS)
 
 /*
  * AFBC format with extra-wide (64x4) superblocks.
  *
  * NOTE: Tiled headers are mandatory for this format.
  */
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_EXTRAWIDEBLK(x) \
-	(mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-	                             (MALI_GRALLOC_INTFMT_AFBC_EXTRAWIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-	                             (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT)))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_EXTRAWIDEBLK(x)                                                 \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_BASIC(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_EXTRAWIDEBLK)
 
 /*
  * AFBC multi-plane YUV format where luma (wide, 32x8) and
@@ -282,31 +301,17 @@ static inline uint64_t mali_gralloc_format_unwrap(int x)
  * NOTE: Tiled headers are mandatory for this format.
  * NOTE: Base format (x) must be a multi-plane YUV format.
  */
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDE_EXTRAWIDE(x) \
-    (mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_WIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_EXTRAWIDEBLK >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT) | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_BASIC >> MALI_GRALLOC_INTFMT_EXT_WRAP_SHIFT))))
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_WIDE_EXTRAWIDE(x)                                        \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_EXTRAWIDEBLK(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_WIDEBLK)
 
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_DOUBLE_BODY(x)                                            \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_BASIC(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY)
 
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_DOUBLE_BODY(x) \
-    (mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> 16 | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY >> 16) | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_BASIC >> 16))))
-
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_SPLIT_DOUBLE_BODY(x) \
-    (mali_gralloc_format_wrapper(x, (MALI_GRALLOC_INTFMT_AFBC_TILED_HEADERS >> 16 | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_SPLITBLK >> 16) | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY >> 16) | \
-                                        (MALI_GRALLOC_INTFMT_AFBC_BASIC >> 16))))
-
-/*
- * Macro to add additional modifier(s) to existing wrapped private format.
- * Arguments include wrapped private format and new modifier(s) to add.
- */
-#define GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(x, modifiers) \
-    ((int)((x) | ((int)((modifiers) >> 16))))
-
+#define GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_SPLIT_DOUBLE_BODY(x)                                      \
+	GRALLOC_PRIVATE_FORMAT_WRAPPER_ADD_MODIFIER(GRALLOC_PRIVATE_FORMAT_WRAPPER_AFBC_TILED_HEADERS_SPLIT(x), \
+	                                            MALI_GRALLOC_INTFMT_AFBC_DOUBLE_BODY)
 
 #define GRALLOC_PRIVATE_FORMAT_UNWRAP(x) mali_gralloc_format_unwrap(x)
 
@@ -317,7 +322,7 @@ static inline uint64_t mali_gralloc_format_unwrap(int x)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_BASIC ((uint64_t)1 << 1)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_SPLITBLK ((uint64_t)1 << 2)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_WIDEBLK ((uint64_t)1 << 3)
-#define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_RESERVED_1 ((uint64_t)1 << 4)
+#define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_WRITE_NON_SPARSE ((uint64_t)1 << 4)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_RESERVED_2 ((uint64_t)1 << 5)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_RESERVED_3 ((uint64_t)1 << 6)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_TILED_HEADERS ((uint64_t)1 << 7)
@@ -327,6 +332,7 @@ static inline uint64_t mali_gralloc_format_unwrap(int x)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_YUV_READ ((uint64_t)1 << 11)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_YUV_WRITE ((uint64_t)1 << 12)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_AFBC_RGBA16161616 ((uint64_t)1 << 13)
+
 
 #define MALI_GRALLOC_FORMAT_CAPABILITY_PIXFMT_RGBA1010102 ((uint64_t)1 << 32)
 #define MALI_GRALLOC_FORMAT_CAPABILITY_PIXFMT_RGBA16161616 ((uint64_t)1 << 33)
@@ -359,19 +365,6 @@ uint64_t mali_gralloc_select_format(const uint64_t req_format,
                                     uint64_t * const internal_format);
 
 bool is_subsampled_yuv(const uint32_t base_format);
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void mali_gralloc_get_caps(struct mali_gralloc_format_caps *gpu_caps,
-                           struct mali_gralloc_format_caps *vpu_caps,
-                           struct mali_gralloc_format_caps *dpu_caps,
-                           struct mali_gralloc_format_caps *dpu_aeu_caps,
-                           struct mali_gralloc_format_caps *cam_caps);
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* MALI_GRALLOC_FORMATS_H_ */

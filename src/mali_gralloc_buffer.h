@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2017-2020 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -28,32 +28,23 @@
 
 #include "mali_gralloc_private_interface_types.h"
 
-/* NOTE:
- * If your framebuffer device driver is integrated with dma_buf, you will have to
- * change this IOCTL definition to reflect your integration with the framebuffer
- * device.
- * Expected return value is a structure filled with a file descriptor
- * backing your framebuffer device memory.
- */
-struct fb_dmabuf_export
-{
-	__u32 fd;
-	__u32 flags;
-};
-#define FBIOGET_DMABUF _IOR('F', 0x21, struct fb_dmabuf_export)
-
 /* the max string size of GRALLOC_HARDWARE_GPU0 & GRALLOC_HARDWARE_FB0
  * 8 is big enough for "gpu0" & "fb0" currently
  */
 #define MALI_GRALLOC_HARDWARE_MAX_STR_LEN 8
-#define NUM_FB_BUFFERS 2
 
-/* Define number of shared file descriptors */
+/* Define number of shared file descriptors. Not guaranteed to be constant for a private_handle_t object
+ * as fds that do not get initialized may instead be treated as integers.
+ */
+
+#define GRALLOC_AML_EXTEND 1
+
 #ifdef GRALLOC_AML_EXTEND
 #define GRALLOC_ARM_NUM_FDS 3
 #else
 #define GRALLOC_ARM_NUM_FDS 2
 #endif
+
 
 #define NUM_INTS_IN_PRIVATE_HANDLE ((sizeof(struct private_handle_t) - sizeof(native_handle)) / sizeof(int) - GRALLOC_ARM_NUM_FDS)
 
@@ -67,6 +58,12 @@ struct fb_dmabuf_export
  * Plane [2]: V/U
  */
 #define MAX_PLANES 3
+
+#ifdef __cplusplus
+#define DEFAULT_INITIALIZER(x) = x
+#else
+#define DEFAULT_INITIALIZER(x)
+#endif
 
 typedef struct plane_info {
 
@@ -141,8 +138,8 @@ struct private_handle_t
 		PRIV_FLAGS_FRAMEBUFFER = 0x00000001,
 		PRIV_FLAGS_USES_ION_COMPOUND_HEAP = 0x00000002,
 		PRIV_FLAGS_USES_ION = 0x00000004,
-		PRIV_FLAGS_USES_ION_DMA_HEAP = 0x00000008,
-//meson graphics changes start
+        PRIV_FLAGS_USES_ION_DMA_HEAP = 0x00000008,
+        //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 		/*
 			!!Dont use these flags directly.
@@ -157,6 +154,7 @@ struct private_handle_t
 		PRIV_FLAGS_VIDEO_TUNNEL = 0x00000400,
 #endif
 //meson graphics changes end
+
 	};
 
 	enum
@@ -173,16 +171,17 @@ struct private_handle_t
 	 * processes.
 	 * DO NOT MOVE THIS ELEMENT!
 	 */
-	int share_fd;
-	int share_attr_fd;
-        /*extend by aml for passing video buf.*/
+	int share_fd DEFAULT_INITIALIZER(-1);
+	int share_attr_fd DEFAULT_INITIALIZER(-1);
+
+/*extend by aml for passing video buf.*/
 #ifdef GRALLOC_AML_EXTEND
-	int am_extend_fd;
+    int am_extend_fd DEFAULT_INITIALIZER(-1);
 #endif
 
 	// ints
-	int magic;
-	int flags;
+	int magic DEFAULT_INITIALIZER(sMagic);
+	int flags DEFAULT_INITIALIZER(0);
 
 	/*
 	 * Input properties.
@@ -191,11 +190,11 @@ struct private_handle_t
 	 * width/height: Buffer dimensions.
 	 * producer/consumer_usage: Buffer usage (indicates IP)
 	 */
-	int width;
-	int height;
-	int req_format;
-	uint64_t producer_usage;
-	uint64_t consumer_usage;
+	int width DEFAULT_INITIALIZER(0);
+	int height DEFAULT_INITIALIZER(0);
+	int req_format DEFAULT_INITIALIZER(0);
+	uint64_t producer_usage DEFAULT_INITIALIZER(0);
+	uint64_t consumer_usage DEFAULT_INITIALIZER(0);
 
 	/*
 	 * DEPRECATED members.
@@ -212,11 +211,11 @@ struct private_handle_t
 	 *
 	 * NOTE: 'stride' values sometimes vary significantly from plane_info[0].alloc_width.
 	 */
-	uint64_t internal_format;
-	int stride;
-	int byte_stride;
-	int internalWidth;
-	int internalHeight;
+	uint64_t internal_format DEFAULT_INITIALIZER(0);
+	int stride DEFAULT_INITIALIZER(0);
+	int byte_stride DEFAULT_INITIALIZER(0);
+	int internalWidth DEFAULT_INITIALIZER(0);
+	int internalHeight DEFAULT_INITIALIZER(0);
 
 	/*
 	 * Allocation properties.
@@ -232,28 +231,28 @@ struct private_handle_t
 	 *               Layer (n) offset: n * ('size' / 'layer_count'), n=0 for the first layer.
 	 *
 	 */
-	uint64_t alloc_format;
-	plane_info_t plane_info[MAX_PLANES];
-	int size;
-	uint32_t layer_count;
+	uint64_t alloc_format DEFAULT_INITIALIZER(0);
+	plane_info_t plane_info[MAX_PLANES] DEFAULT_INITIALIZER({});
+	int size DEFAULT_INITIALIZER(0);
+	uint32_t layer_count DEFAULT_INITIALIZER(0);
 
 
 	union
 	{
-		void *base;
+		void *base DEFAULT_INITIALIZER(NULL);
 		uint64_t padding;
 	};
-	uint64_t backing_store_id;
-	int backing_store_size;
-	int cpu_read;               /**< Buffer is locked for CPU read when non-zero. */
-	int cpu_write;              /**< Buffer is locked for CPU write when non-zero. */
-	int allocating_pid;
-	int remote_pid;
-	int ref_count;
+	uint64_t backing_store_id DEFAULT_INITIALIZER(0x0);
+	int backing_store_size DEFAULT_INITIALIZER(0);
+	int cpu_read DEFAULT_INITIALIZER(0);               /**< Buffer is locked for CPU read when non-zero. */
+	int cpu_write DEFAULT_INITIALIZER(0);              /**< Buffer is locked for CPU write when non-zero. */
+	int allocating_pid DEFAULT_INITIALIZER(0);
+	int remote_pid DEFAULT_INITIALIZER(-1);
+	int ref_count DEFAULT_INITIALIZER(0);
 	// locally mapped shared attribute area
 	union
 	{
-		void *attr_base;
+		void *attr_base DEFAULT_INITIALIZER(MAP_FAILED);
 		uint64_t padding3;
 	};
 
@@ -262,38 +261,39 @@ struct private_handle_t
 	 * Use GRALLOC_ARM_BUFFER_ATTR_DATASPACE
 	 * instead.
 	 */
-	mali_gralloc_yuv_info yuv_info;
+	mali_gralloc_yuv_info yuv_info DEFAULT_INITIALIZER(MALI_YUV_NO_INFO);
 
-	// Following members is for framebuffer only
-	int fd;
+	// For framebuffer only
+	int fd DEFAULT_INITIALIZER(-1);
 	union
 	{
-		off_t offset;
+		off_t offset DEFAULT_INITIALIZER(0);
 		uint64_t padding4;
 	};
 
-	/*
-	 * min_pgsz denotes minimum phys_page size used by this buffer.
-	 * if buffer memory is physical contiguous set min_pgsz to buff->size
-	 * if not sure buff's real phys_page size, you can use SZ_4K for safe.
-	 */
-	int min_pgsz;
-
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-	//for request width and height
-	int format;
-	uint32_t req_width;
-	uint32_t req_height;
-	uint32_t am_extend_type;
-	uint32_t ion_delay_alloc;
-	uint32_t usage;
-	uint32_t padding_1;
-	uint64_t padding_2;
+    //for request width and height
+    int format;
+    uint32_t req_width DEFAULT_INITIALIZER(0);
+    uint32_t req_height DEFAULT_INITIALIZER(0);
+    uint32_t am_extend_type DEFAULT_INITIALIZER(0);
+    uint32_t ion_delay_alloc DEFAULT_INITIALIZER(0);
+    uint32_t usage DEFAULT_INITIALIZER(0);
+    uint32_t padding_1;
+    uint64_t padding_2;
 #else
 #error "gralloc_priv.h shall not be included"
 #endif
 //meson graphics changes end
+
+	/* Size of the attribute shared region in bytes. */
+	uint64_t attr_size DEFAULT_INITIALIZER(0);
+
+	uint64_t reserved_region_size DEFAULT_INITIALIZER(0);
+
+	uint64_t imapper_version DEFAULT_INITIALIZER(0);
+
 #ifdef __cplusplus
 	/*
 	 * We track the number of integers in the structure. There are 16 unconditional
@@ -308,42 +308,20 @@ struct private_handle_t
 
 	private_handle_t(int _flags, int _size, void *_base, uint64_t _consumer_usage, uint64_t _producer_usage,
 	                 int fb_file, off_t fb_offset, int _byte_stride, int _width, int _height, uint64_t _alloc_format)
-	    : share_fd(-1)
-	    , share_attr_fd(-1)
-#ifdef GRALLOC_AML_EXTEND
-	    , am_extend_fd(-1)
-#endif
-	    , magic(sMagic)
-	    , flags(_flags)
-	    , width(0)
-	    , height(0)
+	    : flags(_flags)
 	    , producer_usage(_producer_usage)
 	    , consumer_usage(_consumer_usage)
-	    , stride(0)
 	    , alloc_format(_alloc_format)
 	    , size(_size)
-	    , layer_count(0)
 	    , base(_base)
-	    , backing_store_id(0x0)
-	    , backing_store_size(0)
-	    , cpu_read(0)
-	    , cpu_write(0)
 	    , allocating_pid(getpid())
-	    , remote_pid(-1)
 	    , ref_count(1)
-	    , attr_base(MAP_FAILED)
-	    , yuv_info(MALI_YUV_NO_INFO)
 	    , fd(fb_file)
 	    , offset(fb_offset)
-#ifdef GRALLOC_AML_EXTEND
-	    , am_extend_type(0)
-	    , ion_delay_alloc(0)
-#endif
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
 		numInts = NUM_INTS_IN_PRIVATE_HANDLE;
-		memset(plane_info, 0, sizeof(plane_info_t) * MAX_PLANES);
 
 		plane_info[0].offset = fb_offset;
 		plane_info[0].byte_stride = _byte_stride;
@@ -355,16 +333,11 @@ struct private_handle_t
 #endif
 	}
 
-	private_handle_t(int _flags, int _size, int _min_pgsz, uint64_t _consumer_usage, uint64_t _producer_usage,
+	private_handle_t(int _flags, int _size, uint64_t _consumer_usage, uint64_t _producer_usage,
 	                 int _shared_fd, int _req_format, uint64_t _internal_format, uint64_t _alloc_format, int _width,
 	                 int _height, int _stride, int _internal_width, int _internal_height, int _byte_stride,
 	                 int _backing_store_size, uint64_t _layer_count, plane_info_t _plane_info[MAX_PLANES])
 	    : share_fd(_shared_fd)
-	    , share_attr_fd(-1)
-#ifdef GRALLOC_AML_EXTEND
-	    , am_extend_fd(-1)
-#endif
-	    , magic(sMagic)
 	    , flags(_flags)
 	    , width(_width)
 	    , height(_height)
@@ -379,23 +352,9 @@ struct private_handle_t
 	    , alloc_format(_alloc_format)
 	    , size(_size)
 	    , layer_count(_layer_count)
-	    , base(NULL)
-	    , backing_store_id(0x0)
 	    , backing_store_size(_backing_store_size)
-	    , cpu_read(0)
-	    , cpu_write(0)
 	    , allocating_pid(getpid())
-	    , remote_pid(-1)
 	    , ref_count(1)
-	    , attr_base(MAP_FAILED)
-	    , yuv_info(MALI_YUV_NO_INFO)
-	    , fd(-1)
-	    , offset(0)
-	    , min_pgsz(_min_pgsz)
-#ifdef GRALLOC_AML_EXTEND
-	    , am_extend_type(0)
-	    , ion_delay_alloc(0)
-#endif
 	{
 		version = sizeof(native_handle);
 //meson graphics changes start
@@ -423,15 +382,11 @@ struct private_handle_t
 	static int validate(const native_handle *h)
 	{
 		const private_handle_t *hnd = (const private_handle_t *)h;
-
-		if (!h || h->version != sizeof(native_handle) || h->numInts != NUM_INTS_IN_PRIVATE_HANDLE ||
-		    h->numFds != sNumFds || hnd->magic != sMagic)
+		if (!h || h->version != sizeof(native_handle) || hnd->magic != sMagic ||
+		    h->numFds + h->numInts != NUM_INTS_IN_PRIVATE_HANDLE + GRALLOC_ARM_NUM_FDS)
 		{
-			//ALOGD("version=%d, sizeof(native_handle)=%d, numInts=%d, %d, numFds=%d, sNumFds=%d magic=%x, %x\n",
-			//	   h->version, sizeof(native_handle), h->numInts, NUM_INTS_IN_PRIVATE_HANDLE, h->numFds, sNumFds, hnd->magic, sMagic);
 			return -EINVAL;
 		}
-
 		return 0;
 	}
 

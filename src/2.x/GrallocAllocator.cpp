@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2017-2020 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -17,175 +17,62 @@
  */
 
 #include "GrallocAllocator.h"
-#include "GrallocBufferDescriptor.h"
-#include "mali_gralloc_bufferallocation.h"
-#include "mali_gralloc_bufferdescriptor.h"
-#include "mali_gralloc_ion.h"
-#include "framebuffer_device.h"
+#include "hidl_common/BufferDescriptor.h"
+#include "hidl_common/Allocator.h"
+#include "allocator/mali_gralloc_ion.h"
+#include "fbdev/mali_gralloc_framebuffer.h"
 
-namespace android {
-namespace hardware {
-namespace graphics {
-namespace allocator {
-namespace HIDL_IALLOCATOR_NAMESPACE {
-namespace implementation {
+namespace arm
+{
+namespace allocator
+{
 
-/**
- *  IAllocator constructor. All the state information required for the Gralloc
- *  private module is populated in its default constructor. Gralloc 2.0 specific
- *  state information can be populated here.
- *
- * @return None
- */
+using android::hardware::graphics::allocator::V2_0::IAllocator;
+using android::hardware::graphics::mapper::V2_0::Error;
+using android::hardware::Return;
+using android::hardware::hidl_handle;
+using android::hardware::hidl_vec;
+using android::hardware::Void;
+using android::hardware::hidl_string;
 
 GrallocAllocator::GrallocAllocator()
 {
 }
 
-/*
- *  IAllocator destructor. All the resources acquired for Gralloc private module
- *  are released
- *
- * @return None
- */
 GrallocAllocator::~GrallocAllocator()
 {
 	mali_gralloc_ion_close();
 }
 
-/*
- * Retrieves implementation-defined debug information
- *
- * Retrieves implementation-defined debug information, which will be
- * displayed during, for example, `dumpsys SurfaceFlinger`
- *
- * @param hidl_cb [in] HIDL callback function generating -
- *                String of debug information
- *
- * @return Void
- */
 Return<void> GrallocAllocator::dumpDebugInfo(dumpDebugInfo_cb hidl_cb)
 {
 	hidl_cb(hidl_string());
 	return Void();
 }
 
-/*
- * Allocates buffers with the properties specified by the descriptor
- *
- * @param descriptor: Specifies the properties of the buffers to allocate.
- * @param count: Number of buffers to allocate.
- * @param hidl_cb [in] HIDL callback function generating -
- *        error : NONE upon success. Otherwise,
- *                BAD_DESCRIPTOR when the descriptor is invalid.
- *                NO_RESOURCES when the allocation cannot be fulfilled
- *                UNSUPPORTED when any of the property encoded in the descriptor
- *                            is not supported
- *        stride: Number of pixels between two consecutive rows of the
- *                buffers, when the concept of consecutive rows is defined.
- *        buffers: An array of raw handles to the newly allocated buffers
- *
- * @return Void
- */
-Return<void> GrallocAllocator::allocate(const BufferDescriptor& descriptor,
-                                        uint32_t count, allocate_cb hidl_cb)
+Return<void> GrallocAllocator::allocate(const BufferDescriptor &descriptor, uint32_t count, allocate_cb hidl_cb)
 {
 	buffer_descriptor_t bufferDescriptor;
-	Error error = Error::NONE;
-	int stride = 0, tmpStride = 0;
-	std::vector<hidl_handle> grallocBuffers;
-	gralloc_buffer_descriptor_t grallocBufferDescriptor[1];
-
-	if (!mapper::HIDL_IMAPPER_NAMESPACE::implementation::grallocDecodeBufferDescriptor(descriptor, bufferDescriptor))
+	if (!mapper::common::grallocDecodeBufferDescriptor(descriptor, bufferDescriptor))
 	{
 		hidl_cb(Error::BAD_DESCRIPTOR, 0, hidl_vec<hidl_handle>());
 		return Void();
 	}
-
-	grallocBufferDescriptor[0] = (gralloc_buffer_descriptor_t)(&bufferDescriptor);
-	grallocBuffers.reserve(count);
-
-	for (uint32_t i = 0; i < count; i++)
-	{
-		buffer_handle_t tmpBuffer = nullptr;
-
-		int allocResult = 0;
-#if DISABLE_FRAMEBUFFER_HAL != 1
-		if ((bufferDescriptor.producer_usage & GRALLOC_USAGE_HW_FB) ||
-		    (bufferDescriptor.consumer_usage & GRALLOC_USAGE_HW_FB))
-		{
-			allocResult = mali_gralloc_fb_allocate(&privateModule, &bufferDescriptor,
-			                                       &tmpBuffer);
-		}
-		else
-#endif
-		{
-			allocResult = mali_gralloc_buffer_allocate(&privateModule, grallocBufferDescriptor,
-			                                            1, &tmpBuffer, nullptr);
-		}
-
-		if (allocResult < 0)
-		{
-			AERR("%s, buffer allocation failed with %d", __func__, allocResult);
-			error = Error::NO_RESOURCES;
-			break;
-		}
-
-		if (GRALLOC_USE_LEGACY_CALCS)
-		{
-			mali_gralloc_query_getstride(tmpBuffer, &tmpStride);
-		}
-		else
-		{
-			tmpStride = bufferDescriptor.pixel_stride;
-		}
-
-		if (stride == 0)
-		{
-			stride = tmpStride;
-		}
-		else if (stride != tmpStride)
-		{
-			/* Stride must be the same for all allocations */
-			mali_gralloc_buffer_free(tmpBuffer);
-			stride = 0;
-			error = Error::UNSUPPORTED;
-			break;
-		}
-
-		grallocBuffers.emplace_back(hidl_handle(tmpBuffer));
-	}
-
-	/* Populate the array of buffers for application consumption */
-	hidl_vec<hidl_handle> hidlBuffers;
-	if (error == Error::NONE)
-	{
-		hidlBuffers.setToExternal(grallocBuffers.data(), grallocBuffers.size());
-	}
-	hidl_cb(error, stride, hidlBuffers);
-
-	/* The application should import the Gralloc buffers using IMapper for
-	 * further usage. Free the allocated buffers in IAllocator context
-	 */
-	for (const auto& buffer : grallocBuffers)
-	{
-		mali_gralloc_buffer_free(buffer.getNativeHandle());
-	}
-
+	common::allocate(bufferDescriptor, count, hidl_cb,
+	                 [this](const buffer_descriptor_t *descriptor, buffer_handle_t *handle) -> int
+	                 {
+		                 return mali_gralloc_fb_allocate(&private_module, descriptor, handle);
+		             });
 	return Void();
 }
 
-IAllocator* HIDL_FETCH_IAllocator(const char* /* name */)
-{
-	ALOGV("Arm Module IAllocator %d.%d, pid = %d ppid = %d", GRALLOC_VERSION_MAJOR,
-	       (HIDL_ALLOCATOR_VERSION_SCALED - (GRALLOC_VERSION_MAJOR * 100)) / 10, getpid(), getppid());
-
-	return new GrallocAllocator();
-}
-
-} // namespace implementation
-} // namespace HIDL_IALLOCATOR_NAMESPACE
 } // namespace allocator
-} // namespace graphics
-} // namespace hardware
-} // namespace android
+} // namespace arm
+
+extern "C" IAllocator *HIDL_FETCH_IAllocator(const char * /* name */)
+{
+	MALI_GRALLOC_LOGV("Arm Module IAllocator %d.%d, pid = %d ppid = %d", GRALLOC_VERSION_MAJOR,
+	                  (HIDL_ALLOCATOR_VERSION_SCALED - (GRALLOC_VERSION_MAJOR * 100)) / 10, getpid(), getppid());
+
+	return new arm::allocator::GrallocAllocator();
+}

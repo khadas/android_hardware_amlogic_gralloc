@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Arm Limited.
+ * Copyright (C) 2019-2020 Arm Limited.
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 
-#include "../../../../../src/mali_gralloc_buffer.h"
+#include "mali_gralloc_buffer.h"
 
 namespace arm {
 namespace graphics {

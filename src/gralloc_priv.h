@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2017, 2019-2020 Arm Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -27,48 +27,40 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <cutils/native_handle.h>
-//#include <utils/Log.h>
 
 /* As this file is included by clients, support GRALLOC_USE_GRALLOC1_API
  * flag for 0.3 and 1.0 clients. 2.x+ clients must set GRALLOC_VERSION_MAJOR,
  * which is supported for all versions.
  */
 #ifndef GRALLOC_VERSION_MAJOR
-    #if defined(GRALLOC_USE_GRALLOC1_API) && (GRALLOC_USE_GRALLOC1_API == 0)
-        #define GRALLOC_VERSION_MAJOR 0
-    #else
-        #define GRALLOC_VERSION_MAJOR 1
-    #endif
+#define GRALLOC_VERSION_MAJOR 1
 #endif
 
 #if GRALLOC_VERSION_MAJOR == 2
-    #define HIDL_IMAPPER_NAMESPACE V2_1
-    #define HIDL_IALLOCATOR_NAMESPACE V2_0
-    #define HIDL_COMMON_NAMESPACE V1_1
-
     /* Allocator = 2.0, Mapper = 2.1 and Common = 1.1 */
     #define HIDL_ALLOCATOR_VERSION_SCALED 200
     #define HIDL_MAPPER_VERSION_SCALED 210
     #define HIDL_COMMON_VERSION_SCALED 110
 #elif GRALLOC_VERSION_MAJOR == 3
-    #define HIDL_IMAPPER_NAMESPACE V3_0
-    #define HIDL_IALLOCATOR_NAMESPACE V3_0
-    #define HIDL_COMMON_NAMESPACE V1_2
-
     /* Allocator = 3.0, Mapper = 3.0 and Common = 1.2 */
     #define HIDL_ALLOCATOR_VERSION_SCALED 300
     #define HIDL_MAPPER_VERSION_SCALED 300
     #define HIDL_COMMON_VERSION_SCALED 120
 #endif
 
-#if (GRALLOC_VERSION_MAJOR != 3) && (GRALLOC_VERSION_MAJOR != 2) && (GRALLOC_VERSION_MAJOR != 1) && (GRALLOC_VERSION_MAJOR != 0)
+#if GRALLOC_VERSION_MAJOR == 4
+    /* Allocator = 4.0, Mapper = 4.0 and Common = 1.2 */
+    #define HIDL_ALLOCATOR_VERSION_SCALED 400
+    #define HIDL_MAPPER_VERSION_SCALED 400
+    #define HIDL_COMMON_VERSION_SCALED 120
+#endif
+
+#if (GRALLOC_VERSION_MAJOR != 4) &&(GRALLOC_VERSION_MAJOR != 3) && (GRALLOC_VERSION_MAJOR != 2) && (GRALLOC_VERSION_MAJOR != 1)
     #error " Gralloc version $(GRALLOC_VERSION_MAJOR) is not supported"
 #endif
 
 #if GRALLOC_VERSION_MAJOR == 1
 #include <hardware/gralloc1.h>
-#elif GRALLOC_VERSION_MAJOR == 0
-#include <hardware/gralloc.h>
 #endif
 
 #include "mali_gralloc_formats.h"
@@ -85,14 +77,6 @@
  * the new private API.
  */
 #include "mali_gralloc_buffer.h"
-#endif
-
-#if GRALLOC_VERSION_MAJOR == 1
-
-/* gralloc 1.0 supports the new private interface that abstracts
- * the private buffer definition to a set of defined APIs.
- */
-#include "mali_gralloc_private_interface.h"
 #endif
 
 #endif /* GRALLOC_PRIV_H_ */

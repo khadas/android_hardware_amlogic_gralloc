@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-19 ARM Limited. All rights reserved.
+ * Copyright (C) 2018-2020 ARM Limited. All rights reserved.
  *
  * Copyright 2016 The Android Open Source Project
  *
@@ -18,113 +18,68 @@
 #ifndef ANDROID_HARDWARE_GRAPHICS_MAPPER_V3_x_GRALLOC_MAPPER_H
 #define ANDROID_HARDWARE_GRAPHICS_MAPPER_V3_x_GRALLOC_MAPPER_H
 
-#if HIDL_MAPPER_VERSION_SCALED == 300
 #include <android/hardware/graphics/mapper/3.0/IMapper.h>
-#endif
 
-#include "mali_gralloc_module.h"
+#include "hidl_common/Mapper.h"
 
-namespace android {
-namespace hardware {
-namespace graphics {
+namespace arm {
 namespace mapper {
-namespace HIDL_IMAPPER_NAMESPACE {
-namespace implementation {
 
-using V3_0::Error;
-using V3_0::BufferDescriptor;
-using V3_0::YCbCrLayout;
+using android::hardware::graphics::mapper::V3_0::Error;
+using android::hardware::graphics::mapper::V3_0::BufferDescriptor;
+using android::hardware::graphics::mapper::V3_0::YCbCrLayout;
+using android::hardware::graphics::mapper::V3_0::IMapper;
+using android::hardware::Return;
+using android::hardware::hidl_handle;
 
 class GrallocMapper : public IMapper
 {
 public:
+
+	/**
+	 * IMapper constructor. All the state information required for the Gralloc
+	 * private module is populated in its default constructor. Gralloc 3.x specific
+	 * state information can be populated here.
+	 */
 	GrallocMapper();
+
+	/*
+	 * IMapper destructor. All the resources aquired for Gralloc private module
+	 * (in the IMapper context) are released
+	 */
 	~GrallocMapper();
 
 	/* Override the public IMapper 3.0 interface */
-
-	/* Creates a buffer descriptor */
 	Return<void> createDescriptor(const BufferDescriptorInfo& descriptorInfo,
 	                              createDescriptor_cb hidl_cb) override;
 
-	/* Imports a raw buffer handle to create an imported buffer handle */
 	Return<void> importBuffer(const hidl_handle& rawHandle,
 	                          importBuffer_cb hidl_cb) override;
 
-	/* Frees a buffer handle */
 	Return<Error> freeBuffer(void* buffer) override;
 
-	/* Locks the given buffer for the specified CPU usage */
 	Return<void> lock(void* buffer, uint64_t cpuUsage,
 	                  const IMapper::Rect& accessRegion,
 	                  const hidl_handle& acquireFence,
 	                  lock_cb hidl_cb) override;
 
-	/*
-	 * Locks the given buffer for the specified CPU usage and exports CPU
-	 * accessible data in YCbCr structure
-	 */
 	Return<void> lockYCbCr(void* buffer, uint64_t cpuUsage,
 	                       const IMapper::Rect& accessRegion,
 	                       const hidl_handle& acquireFence,
 	                       lockYCbCr_cb hidl_cb) override;
 
-	/* Unlocks a buffer to indicate all CPU accesses to the buffer have completed */
 	Return<void> unlock(void* buffer, unlock_cb hidl_cb) override;
 
-	/* Validates the buffer against specified descriptor attributes */
 	Return<Error> validateBufferSize(void* buffer,
-	                                 const V3_0::IMapper::BufferDescriptorInfo& descriptorInfo,
+	                                 const BufferDescriptorInfo& descriptorInfo,
 	                                 uint32_t stride) override;
 
-	/* Get the transport size of a buffer */
 	Return<void> getTransportSize(void* buffer, getTransportSize_cb _hidl_cb) override;
 
-	/* Test whether the given BufferDescriptorInfo is allocatable */
-	Return<void> isSupported(const V3_0::IMapper::BufferDescriptorInfo& description,
+	Return<void> isSupported(const BufferDescriptorInfo& description,
 	                         isSupported_cb _hidl_cb) override;
-
-private:
-	/* Validates incoming IMapper descriptor attributes */
-	bool validateDescriptorInfo(void *descriptor_attr) const;
-
-	/* Register a buffer.  The handle is already cloned by the caller */
-	Error registerBuffer(buffer_handle_t bufferHandle) const;
-
-	/* Unmap a buffer.  The handle is already cloned by the caller */
-	Error unregisterBuffer(buffer_handle_t bufferHandle) const;
-
-	/* Lock a buffer.  The fence is owned by the caller */
-	Error lockBuffer(buffer_handle_t bufferHandle, uint64_t cpuUsage,
-	                 const IMapper::Rect& accessRegion, int fenceFd,
-	                 void** outData) const;
-
-	/* Lock a buffer, with YCbCr data exported.  The fence is owned by the caller */
-	Error lockBuffer(buffer_handle_t bufferHandle, uint64_t cpuUsage,
-	                 const IMapper::Rect& accessRegion, int fenceFd,
-	                 YCbCrLayout* outLayout) const;
-
-	/* Unlock a buffer.  The returned fence is owned by the caller */
-	Error unlockBuffer(buffer_handle_t bufferHandle,
-	                   int* outFenceFd) const;
-
-	/* Retrieves the file descriptor referring to a sync fence object */
-	bool getFenceFd(const hidl_handle& fenceHandle, int* outFenceFd) const;
-
-	/* Populates the HIDL fence handle for the given fence object */
-	hidl_handle getFenceHandle(int fenceFd, char* handleStorage) const;
-
-	/* To hold state information for the instance of mapper */
-	struct private_module_t privateModule;
 };
 
-extern "C" IMapper* HIDL_FETCH_IMapper(const char* name);
-
-} // namespace implementation
-} // namespace HIDL_IMAPPER_NAMESPACE
 } // namespace mapper
-} // namespace graphics
-} // namespace hardware
-} // namespace android
-
+} // namespace arm
 #endif // ANDROID_HARDWARE_GRAPHICS_MAPPER_V3_x_GRALLOC_MAPPER_H

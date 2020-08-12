@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 ARM Limited. All rights reserved.
+ * Copyright (C) 2019-2020 ARM Limited. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,10 @@ extern "C"
 
 #ifndef DRM_FORMAT_ABGR16161616F
 #define DRM_FORMAT_ABGR16161616F fourcc_code('A', 'B', '4', 'H')
+#endif
+
+#ifndef DRM_FORMAT_R16
+#define DRM_FORMAT_R16 fourcc_code('R', '1', '6', ' ')
 #endif
 
 /* ARM specific modifiers. */

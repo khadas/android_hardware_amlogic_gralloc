@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 ARM Limited. All rights reserved.
+ * Copyright (C) 2014-2018, 2020 Arm Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -19,51 +19,65 @@
 #ifndef GRALLOC_BUFFER_PRIV_H_
 #define GRALLOC_BUFFER_PRIV_H_
 
-#include "gralloc_priv.h"
+#include "mali_gralloc_buffer.h"
+#include "mali_gralloc_formats.h"
+#include "gralloc_helper.h"
+#include <utils/Log.h>
 #include <errno.h>
 #include <string.h>
 #include "mali_gralloc_private_interface_types.h"
 
 // private gralloc buffer manipulation API
 
+/* This structure needs to have the same layout for all architectures and compilers. */
 struct attr_region
 {
 	/* Rectangle to be cropped from the full frame (Origin in top-left corner!) */
-	int crop_top;
-	int crop_left;
-	int crop_height;
-	int crop_width;
-	int use_yuv_transform;     /* DEPRECATED. Now explicitly signalled by gralloc through MALI_GRALLOC_INTFMT_AFBC_YUV_TRANSFORM */
-	int use_sparse_alloc;
+	int32_t crop_top;
+	int32_t crop_left;
+	int32_t crop_height;
+	int32_t crop_width;
 	mali_hdr_info hdr_info;
 	android_dataspace_t dataspace;
-
+    
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-	int am_omx_tunnel;
-	int am_omx_flag;
-	int am_omx_video_type;
+   int am_omx_tunnel;
+   int am_omx_flag;
+   int am_omx_video_type;
 #endif
 //meson graphics changes end
-} __attribute__((packed));
+
+#ifdef __cplusplus
+	attr_region()
+	    : crop_top(-1)
+	    , crop_left(-1)
+	    , crop_height(-1)
+	    , crop_width(-1)
+	    , dataspace(HAL_DATASPACE_UNKNOWN)
+	{
+	}
+#endif
+};
+
+static_assert(sizeof(android_dataspace_t) == 4, "Unexpected size");
+/*
+ * The purpose of this assert is to ensure 32-bit and 64-bit ABIs have a consistent view
+ * of the memory. The assert shouldn't contain any sizeof(), as sizeof() is ABI-dependent.
+ * The exception is the size of mali_hdr_info as there is an assertion for that alongside
+ * its definition.
+ */
+#ifdef GRALLOC_AML_EXTEND
+static_assert(sizeof(struct attr_region) ==
+    (8 * 4) + sizeof(mali_hdr_info), "Unexpected size");
+#else
+static_assert(sizeof(struct attr_region) ==
+    (5 * 4) + sizeof(mali_hdr_info), "Unexpected size");
+#endif
 
 typedef struct attr_region attr_region;
 
-/*
- * Allocate shared memory for attribute storage. Only to be
- * used by gralloc internally.
- *
- * Return 0 on success.
- */
-int gralloc_buffer_attr_allocate(struct private_handle_t *hnd);
-
-/*
- * Frees the shared memory allocated for attribute storage.
- * Only to be used by gralloc internally.
-
- * Return 0 on success.
- */
-int gralloc_buffer_attr_free(struct private_handle_t *hnd);
+struct buffer_descriptor_t;
 
 /*
  * Map the attribute storage area before attempting to
@@ -81,9 +95,15 @@ static inline int gralloc_buffer_attr_map(struct private_handle_t *hnd, int read
 		goto out;
 	}
 
+	if (hnd->imapper_version >= 400)
+	{
+		MALI_GRALLOC_LOGE("Legacy attribute region not supported on Gralloc v4+");
+		goto out;
+	}
+
 	if (hnd->share_attr_fd < 0)
 	{
-		ALOGE("Shared attribute region not available to be mapped");
+		MALI_GRALLOC_LOGE("Shared attribute region not available to be mapped");
 		goto out;
 	}
 
@@ -92,11 +112,11 @@ static inline int gralloc_buffer_attr_map(struct private_handle_t *hnd, int read
 		prot_flags |= PROT_WRITE;
 	}
 
-	hnd->attr_base = mmap(NULL, PAGE_SIZE, prot_flags, MAP_SHARED, hnd->share_attr_fd, 0);
+	hnd->attr_base = mmap(NULL, hnd->attr_size, prot_flags, MAP_SHARED, hnd->share_attr_fd, 0);
 
 	if (hnd->attr_base == MAP_FAILED)
 	{
-		ALOGE("Failed to mmap shared attribute region err=%s", strerror(errno));
+		MALI_GRALLOC_LOGE("Failed to mmap shared attribute region err=%s", strerror(errno));
 		goto out;
 	}
 
@@ -120,9 +140,15 @@ static inline int gralloc_buffer_attr_unmap(struct private_handle_t *hnd)
 		goto out;
 	}
 
+	if (hnd->imapper_version >= 400)
+	{
+		MALI_GRALLOC_LOGE("Legacy attribute region not supported on Gralloc v4+");
+		goto out;
+	}
+
 	if (hnd->attr_base != MAP_FAILED)
 	{
-		if (munmap(hnd->attr_base, PAGE_SIZE) == 0)
+		if (munmap(hnd->attr_base, hnd->attr_size) == 0)
 		{
 			hnd->attr_base = MAP_FAILED;
 			rval = 0;
@@ -147,6 +173,12 @@ static inline int gralloc_buffer_attr_write(struct private_handle_t *hnd, buf_at
 		goto out;
 	}
 
+	if (hnd->imapper_version >= 400)
+	{
+		MALI_GRALLOC_LOGE("Legacy attribute region not supported on Gralloc v4+");
+		goto out;
+	}
+
 	if (hnd->attr_base != MAP_FAILED)
 	{
 		attr_region *region = (attr_region *)hnd->attr_base;
@@ -158,16 +190,6 @@ static inline int gralloc_buffer_attr_write(struct private_handle_t *hnd, buf_at
 			rval = 0;
 			break;
 
-		case GRALLOC_ARM_BUFFER_ATTR_AFBC_YUV_TRANS:
-			region->use_yuv_transform = *val;
-			rval = 0;
-			break;
-
-		case GRALLOC_ARM_BUFFER_ATTR_AFBC_SPARSE_ALLOC:
-			region->use_sparse_alloc = *val;
-			rval = 0;
-			break;
-
 		case GRALLOC_ARM_BUFFER_ATTR_HDR_INFO:
 			memcpy(&region->hdr_info, val, sizeof(mali_hdr_info));
 			rval = 0;
@@ -175,18 +197,18 @@ static inline int gralloc_buffer_attr_write(struct private_handle_t *hnd, buf_at
 
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
-			region->am_omx_tunnel = *val;
-			rval = 0;
- 			break;
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
-			region->am_omx_flag = *val;
-			rval = 0;
-			break;
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
-			region->am_omx_video_type = *val;
-			rval = 0;
-			break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
+           region->am_omx_tunnel = *val;
+           rval = 0;
+           break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
+           region->am_omx_flag = *val;
+           rval = 0;
+           break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
+           region->am_omx_video_type = *val;
+           rval = 0;
+           break;
 #endif
 //meson graphics changes end
 
@@ -210,6 +232,12 @@ static inline int gralloc_buffer_attr_read(struct private_handle_t *hnd, buf_att
 		goto out;
 	}
 
+	if (hnd->imapper_version >= 400)
+	{
+		MALI_GRALLOC_LOGE("Legacy attribute region not supported on Gralloc v4+");
+		goto out;
+	}
+
 	if (hnd->attr_base != MAP_FAILED)
 	{
 		attr_region *region = (attr_region *)hnd->attr_base;
@@ -221,35 +249,24 @@ static inline int gralloc_buffer_attr_read(struct private_handle_t *hnd, buf_att
 			rval = 0;
 			break;
 
-		case GRALLOC_ARM_BUFFER_ATTR_AFBC_YUV_TRANS:
-			*val = region->use_yuv_transform;
-			rval = 0;
-			break;
-
-		case GRALLOC_ARM_BUFFER_ATTR_AFBC_SPARSE_ALLOC:
-			*val = region->use_sparse_alloc;
-			rval = 0;
-			break;
-
 		case GRALLOC_ARM_BUFFER_ATTR_HDR_INFO:
 			memcpy(val, &region->hdr_info, sizeof(mali_hdr_info));
 			rval = 0;
 			break;
-
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
-			*val = region->am_omx_tunnel;
-			rval = 0;
-			break;
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
-			*val = region->am_omx_flag;
-			rval = 0;
-			break;
-		case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
-			*val = region->am_omx_video_type;
-			rval = 0;
-			break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
+           region->am_omx_tunnel = *val;
+           rval = 0;
+           break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
+           region->am_omx_flag = *val;
+           rval = 0;
+           break;
+       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
+           region->am_omx_video_type = *val;
+           rval = 0;
+           break;
 #endif
 //meson graphics changes end
 
@@ -259,7 +276,6 @@ static inline int gralloc_buffer_attr_read(struct private_handle_t *hnd, buf_att
 			break;
 		}
 	}
-
 out:
 	return rval;
 }

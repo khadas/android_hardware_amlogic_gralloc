@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 ARM Limited. All rights reserved.
+ * Copyright (C) 2017, 2020 Arm Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -22,6 +22,14 @@
 #define GRALLOC_ARM_BUFFER_ATTR_HDR_INFO_SUPPORT
 #define GRALLOC_ARM_BUFFER_ATTR_DATASPACE_SUPPORT
 
+#include <assert.h>
+
+#ifndef __cplusplus
+/* Android P uses gnu99 for C standard, which has _Static_assert but does not define static_assert. */
+#ifndef static_assert
+#define static_assert _Static_assert
+#endif
+#endif
 /*
  * Deprecated.
  * Use GRALLOC_ARM_BUFFER_ATTR_DATASPACE
@@ -35,6 +43,7 @@ typedef enum
 	MALI_HDR_LAST
 } mali_transfer_function;
 
+/* This structure needs to have the same layout on all architecures and compilers. */
 typedef struct
 {
 	//values are in units of 0.00002
@@ -42,6 +51,9 @@ typedef struct
 	uint16_t y;
 } primaries;
 
+static_assert(sizeof(primaries) == 4, "Unexpected size");
+
+/* This structure needs to have the same layout on all architecures and compilers. */
 typedef struct
 {
 	primaries r;
@@ -56,6 +68,13 @@ typedef struct
 	/* Deprecated. Use GRALLOC_ARM_BUFFER_ATTR_DATASPACE instead. */
 	mali_transfer_function eotf;
 } mali_hdr_info;
+
+/*
+ * The purpose of this assert is to ensure 32-bit and 64-bit ABIs have a consistent view
+ * of the memory. The assert shouldn't contain any sizeof(), as sizeof() is ABI-dependent.
+ */
+static_assert(sizeof(mali_transfer_function) == 4, "Unexpected size");
+static_assert(sizeof(mali_hdr_info) == (5 * 4) + (4 * 2), "Unexpected size");
 
 enum
 {
@@ -74,22 +93,21 @@ enum
 	/* Set if the AFBC format uses sparse allocation */
 	GRALLOC_ARM_BUFFER_ATTR_AFBC_SPARSE_ALLOC = 3,
 
-	/* HDR Information */
+	/* HDR Information. Required by Android Framework. */
 	GRALLOC_ARM_BUFFER_ATTR_HDR_INFO = 4,
 
 	/* Dataspace - used for YUV to RGB conversion. */
 	GRALLOC_ARM_BUFFER_ATTR_DATASPACE = 5,
-
 /*meson graphics changes start*/
 #ifdef GRALLOC_AML_EXTEND
-	/* Amlogic: set tunnel index for omx video for pip.*/
-	GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL = 6,
+    /* Amlogic: set tunnel index for omx video for pip.*/
+    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL = 6,
 
     /* Extend by aml for update the omx flag pts/v4l */
-	GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG = 7,
+    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG = 7,
 
-	/* Extend by aml for update the omx video_type */
-	GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE = 8,
+    /* Extend by aml for update the omx video_type */
+    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE = 8,
 #endif
 //meson graphics changes end
 
