@@ -157,7 +157,11 @@ static uint16_t get_producers(uint64_t usage)
 
 	if (usage == GRALLOC_USAGE_HW_COMPOSER)
 	{
+#ifdef GRALLOC_AML_EXTEND
+		producers = MALI_GRALLOC_PRODUCER_DPU;
+#else
 		producers = MALI_GRALLOC_PRODUCER_DPU_AEU;
+#endif
 	}
 	else
 	{
