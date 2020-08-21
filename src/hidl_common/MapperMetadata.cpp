@@ -63,6 +63,7 @@ static std::vector<std::vector<PlaneLayoutComponent>> plane_layout_components_fr
 	const ExtendableType CB = android::gralloc4::PlaneLayoutComponentType_CB;
 	const ExtendableType CR = android::gralloc4::PlaneLayoutComponentType_CR;
 	const ExtendableType Y = android::gralloc4::PlaneLayoutComponentType_Y;
+	const ExtendableType RAW = android::gralloc4::PlaneLayoutComponentType_RAW;
 
 	struct table_entry
 	{
@@ -195,6 +196,15 @@ static std::vector<std::vector<PlaneLayoutComponent>> plane_layout_components_fr
 	};
 	/* clang-format on */
 
+	/* Special case for formats that can't be represented by a DRM fourcc */
+	switch (hnd->alloc_format)
+	{
+	case MALI_GRALLOC_FORMAT_INTERNAL_RAW10:
+	case MALI_GRALLOC_FORMAT_INTERNAL_RAW12:
+		std::vector<std::vector<PlaneLayoutComponent>> components = { { { RAW, 0, -1 } } };
+		return components;
+	}
+
 	const uint32_t drm_fourcc = drm_fourcc_from_handle(hnd);
 	if (drm_fourcc != DRM_FORMAT_INVALID)
 	{
@@ -237,13 +247,17 @@ static android::status_t get_plane_layouts(const private_handle_t *handle, std::
 		}
 
 		int64_t sample_increment_in_bits = 0;
-		if (handle->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC)
+		switch (handle->alloc_format)
 		{
-			sample_increment_in_bits = format_info.bpp[plane_index];
-		}
-		else
-		{
-			sample_increment_in_bits = format_info.bpp_afbc[plane_index];
+		case MALI_GRALLOC_FORMAT_INTERNAL_RAW10:
+		case MALI_GRALLOC_FORMAT_INTERNAL_RAW12:
+			sample_increment_in_bits = 0;
+			break;
+		default:
+			sample_increment_in_bits = (handle->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC)
+			   ? format_info.bpp_afbc[plane_index]
+			   : format_info.bpp[plane_index];
+			break;
 		}
 
 		PlaneLayout layout = {.offsetInBytes = handle->plane_info[plane_index].offset,
