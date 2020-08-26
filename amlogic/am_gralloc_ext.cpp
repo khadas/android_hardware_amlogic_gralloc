@@ -38,6 +38,7 @@ int am_gralloc_ext_get_ext_attr(struct private_handle_t * hnd,
         return GRALLOC1_ERROR_BAD_HANDLE;
     }
 
+    gralloc_buffer_attr_unmap(hnd);
     return GRALLOC1_ERROR_NONE;
 }
 
@@ -54,6 +55,7 @@ int am_gralloc_ext_set_ext_attr(struct private_handle_t * hnd,
         return GRALLOC1_ERROR_BAD_HANDLE;
     }
 
+    gralloc_buffer_attr_unmap(hnd);
     return GRALLOC1_ERROR_NONE;
 }
 
