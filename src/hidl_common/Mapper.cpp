@@ -834,6 +834,14 @@ void listSupportedMetadataTypes(IMapper::listSupportedMetadataTypes_cb hidl_cb)
 		/* Arm vendor metadata */
 		{ ArmMetadataType_PLANE_FDS,
 			"Vector of file descriptors of each plane", true, false },
+#ifdef GRALLOC_AML_EXTEND
+		{ ArmMetadataType_AM_OMX_TUNNEL,
+			"set tunnel index for omx video for pip", true, true },
+		{ ArmMetadataType_AM_OMX_FLAG,
+			"Extend by aml for update the omx flag pts/v4l", true, true },
+		{ ArmMetadataType_AM_OMX_VIDEO_TYPE,
+			"Extend by aml for update the omx video_type", true, true },
+#endif
 	};
 	hidl_cb(Error::NONE, descriptions);
 	return;

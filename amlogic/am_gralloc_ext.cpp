@@ -17,12 +17,84 @@
 #include <gralloc_priv.h>
 #include "gralloc_buffer_priv.h"
 
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
+#include <gralloctypes/Gralloc4.h>
+#include <aidl/arm/graphics/ArmMetadataType.h>
+
 /*
 Api default have upgrade to support gralloc 3.x.
 For legacy gralloc, need force enable GRALLOC_USE_GRALLOC1_API in file or mk.
 */
 //#define GRALLOC_USE_GRALLOC1_API 1
 #include <cutils/properties.h>
+
+using android::hardware::graphics::mapper::V4_0::Error;
+using android::hardware::graphics::mapper::V4_0::IMapper;
+using android::hardware::hidl_vec;
+using android::gralloc4::encodeInt32;
+using android::gralloc4::decodeInt32;
+
+
+#define GRALLOC_ARM_METADATA_TYPE_NAME "arm.graphics.ArmMetadataType"
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_TUNNEL{
+    GRALLOC_ARM_METADATA_TYPE_NAME,
+    static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_TUNNEL)
+};
+
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_FLAG{
+    GRALLOC_ARM_METADATA_TYPE_NAME,
+    static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_FLAG)
+};
+
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_VIDEO_TYPE{
+    GRALLOC_ARM_METADATA_TYPE_NAME,
+    static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_VIDEO_TYPE)
+};
+
+static IMapper &get_service()
+{
+  static android::sp<IMapper> cached_service = IMapper::getService();
+  return *cached_service;
+}
+
+static int am_get_metadata(IMapper &mapper, const native_handle_t * handle, IMapper::MetadataType type, int* value)
+{
+	void *handle_arg = const_cast<native_handle_t *>(handle);
+	assert(handle_arg);
+	assert(value);
+	assert(decode);
+
+	int err = 0;
+    Error error;
+    hidl_vec<uint8_t> metadata;
+    mapper.get(handle_arg, type,
+                [&](const auto& tmpError, const hidl_vec<uint8_t>& tmpVec) {
+                    error = tmpError;
+                    metadata = tmpVec;
+                });
+    if (error == Error::NONE) {
+        err = decodeInt32(type, metadata, value);
+    }
+	return err;
+}
+
+static int am_set_metadata(IMapper &mapper, const native_handle_t * handle, IMapper::MetadataType type, const int value)
+{
+    void *handle_arg = const_cast<native_handle_t *>(handle);
+    assert(handle_arg);
+    assert(encode);
+    int err = 0;
+    hidl_vec<uint8_t> metadata;
+    err = encodeInt32(type, value, &metadata);
+    if (!err) {
+        Error error = mapper.set(handle_arg, type, metadata);
+        if (error != Error::NONE)
+        {
+            err = android::BAD_VALUE;
+        }
+    }
+    return err;
+}
 
 bool am_gralloc_is_valid_graphic_buffer(
     const native_handle_t * hnd) {
@@ -32,35 +104,28 @@ bool am_gralloc_is_valid_graphic_buffer(
     return false;
 }
 
-int am_gralloc_ext_get_ext_attr(struct private_handle_t * hnd,
-    buf_attr attr, int * val) {
-    if (hnd->attr_base == MAP_FAILED) {
-        if (gralloc_buffer_attr_map(hnd, 1) < 0) {
-            return GRALLOC1_ERROR_BAD_HANDLE;
-        }
-    }
-
-    if (gralloc_buffer_attr_read(hnd, attr, val) < 0) {
-        gralloc_buffer_attr_unmap(hnd);
+int am_gralloc_ext_get_ext_attr(const native_handle_t * hnd,
+    IMapper::MetadataType type, int * val) {
+    auto &mapper = get_service();
+    int err = am_get_metadata(mapper, hnd, type, val);
+    if (err != android::OK)
+    {
+        ALOGE("Failed to get metadata");
         return GRALLOC1_ERROR_BAD_HANDLE;
     }
 
     return GRALLOC1_ERROR_NONE;
 }
 
-int am_gralloc_ext_set_ext_attr(struct private_handle_t * hnd,
-    buf_attr attr, int val) {
-    if (hnd->attr_base == MAP_FAILED) {
-        if (gralloc_buffer_attr_map(hnd, 1) < 0) {
-            return GRALLOC1_ERROR_BAD_HANDLE;
-        }
-    }
-
-    if (gralloc_buffer_attr_write(hnd, attr, &val) < 0) {
-        gralloc_buffer_attr_unmap(hnd);
+int am_gralloc_ext_set_ext_attr(const native_handle_t * hnd,
+    IMapper::MetadataType type, int val) {
+    auto &mapper = get_service();
+    int err = am_set_metadata(mapper, hnd, type, val);
+    if (err != android::OK)
+    {
+        ALOGE("Failed to set metadata");
         return GRALLOC1_ERROR_BAD_HANDLE;
     }
-
     return GRALLOC1_ERROR_NONE;
 }
 
@@ -266,8 +331,8 @@ bool am_gralloc_is_omx_metadata_buffer(
     private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX)) {
         int val = 0;
-        am_gralloc_ext_get_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, &val);
+        am_gralloc_ext_get_ext_attr(hnd,
+            ArmMetadataType_AM_OMX_FLAG, &val);
         if (val != AM_PRIV_ATTR_OMX_V4L_PRODUCER)
             return true;
     }
@@ -281,7 +346,7 @@ bool am_gralloc_is_omx_v4l_buffer(
     if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX)) {
         int val = 0;
         am_gralloc_ext_get_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, &val);
+            ArmMetadataType_AM_OMX_FLAG, &val);
         if (val == AM_PRIV_ATTR_OMX_V4L_PRODUCER)
             return true;
     }
@@ -310,8 +375,8 @@ bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
     int ret = GRALLOC1_ERROR_NONE;
     if (buffer) {
         int val;
-        ret = am_gralloc_ext_get_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL, &val);
+        ret = am_gralloc_ext_get_ext_attr(hnd,
+            ArmMetadataType_AM_OMX_TUNNEL, &val);
         if (ret == GRALLOC1_ERROR_NONE) {
             if (val == 1)
                 *tunnel = 1;
@@ -332,7 +397,7 @@ bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
 
     if (buffer) {
         ret = am_gralloc_ext_set_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL, tunnel);
+            ArmMetadataType_AM_OMX_TUNNEL, tunnel);
     } else {
         ret = GRALLOC1_ERROR_BAD_HANDLE;
     }
@@ -346,8 +411,8 @@ bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
     int ret = GRALLOC1_ERROR_NONE;
     if (buffer) {
         int val;
-        ret = am_gralloc_ext_get_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE, &val);
+        ret = am_gralloc_ext_get_ext_attr(hnd,
+            ArmMetadataType_AM_OMX_VIDEO_TYPE, &val);
         if (ret == GRALLOC1_ERROR_NONE) {
             *video_type = val;
         }
@@ -365,7 +430,7 @@ bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
 
     if (buffer) {
         ret = am_gralloc_ext_set_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE, video_type);
+            ArmMetadataType_AM_OMX_VIDEO_TYPE, video_type);
     } else {
         ret = GRALLOC1_ERROR_BAD_HANDLE;
     }
@@ -569,7 +634,7 @@ int am_gralloc_attr_set_omx_v4l_producer_flag(
     if (buffer) {
         int val = AM_PRIV_ATTR_OMX_V4L_PRODUCER;
         am_gralloc_ext_set_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
+            ArmMetadataType_AM_OMX_FLAG, val);
     }
 
     return -1;
@@ -582,7 +647,7 @@ int am_gralloc_attr_set_omx_pts_producer_flag(
     if (buffer) {
         int val = AM_PRIV_ATTR_OMX_PTS_PRODUCER;
         am_gralloc_ext_set_ext_attr(buffer,
-            GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG, val);
+            ArmMetadataType_AM_OMX_FLAG, val);
     }
 
     return -1;

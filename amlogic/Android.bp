@@ -18,7 +18,12 @@ cc_library_shared {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@4.0",
+		"arm.graphics-ndk_platform",
+		"libgralloctypes",
+		"libhidlbase",
     ],
     cflags: [
         "-DUSE_BUFFER_USAGE=1",
@@ -40,7 +45,12 @@ cc_library_static {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@4.0",
+		"arm.graphics-ndk_platform",
+		"libgralloctypes",
+		"libhidlbase",
     ],
     cflags: [
         "-DUSE_BUFFER_USAGE=1",
@@ -77,5 +87,6 @@ cc_library_static {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
     ],
 }

@@ -50,6 +50,17 @@ const static ExtendableType Compression_AFBC{ GRALLOC_ARM_COMPRESSION_TYPE_NAME,
 #define GRALLOC_ARM_METADATA_TYPE_NAME "arm.graphics.ArmMetadataType"
 const static IMapper::MetadataType ArmMetadataType_PLANE_FDS{ GRALLOC_ARM_METADATA_TYPE_NAME,
                                                   static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::PLANE_FDS) };
+#ifdef GRALLOC_AML_EXTEND
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_TUNNEL{ GRALLOC_ARM_METADATA_TYPE_NAME,
+                                                  static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_TUNNEL) };
+
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_FLAG{ GRALLOC_ARM_METADATA_TYPE_NAME,
+                                                  static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_FLAG) };
+
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_VIDEO_TYPE{ GRALLOC_ARM_METADATA_TYPE_NAME,
+                                                  static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_VIDEO_TYPE) };
+#endif
+
 
 /**
  * Retrieves a Buffer's metadata value.

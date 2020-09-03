@@ -96,7 +96,11 @@ struct shared_metadata
 	aligned_optional<Smpte2086> smpte2086 {};
 	aligned_inline_vector<uint8_t, 2048> smpte2094_40 {};
 	aligned_inline_vector<char, 256> name {};
-
+#ifdef GRALLOC_AML_EXTEND
+	int32_t am_omx_tunnel;
+	int32_t am_omx_flag;
+	int32_t am_omx_video_type;
+#endif
 	shared_metadata() = default;
 
 	shared_metadata(std::string_view in_name)
@@ -134,9 +138,22 @@ static_assert(sizeof(shared_metadata::smpte2094_40) == 2052, "bad size");
 static_assert(offsetof(shared_metadata, name) == 2144, "bad alignment");
 static_assert(sizeof(shared_metadata::name) == 260, "bad size");
 
+#ifdef GRALLOC_AML_EXTEND
+static_assert(offsetof(shared_metadata, am_omx_tunnel) == 2404, "bad alignment");
+static_assert(sizeof(shared_metadata::am_omx_tunnel) == 4, "bad size");
+
+static_assert(offsetof(shared_metadata, am_omx_flag) == 2408, "bad alignment");
+static_assert(sizeof(shared_metadata::am_omx_flag) == 4, "bad size");
+
+static_assert(offsetof(shared_metadata, am_omx_video_type) == 2412, "bad alignment");
+static_assert(sizeof(shared_metadata::am_omx_video_type) == 4, "bad size");
+
+static_assert(alignof(shared_metadata) == 4, "bad alignment");
+static_assert(sizeof(shared_metadata) == 2416, "bad size");
+#else
 static_assert(alignof(shared_metadata) == 4, "bad alignment");
 static_assert(sizeof(shared_metadata) == 2404, "bad size");
-
+#endif
 void shared_metadata_init(void *memory, std::string_view name)
 {
 	new(memory) shared_metadata(name);
@@ -200,6 +217,43 @@ void set_blend_mode(const private_handle_t *hnd, const BlendMode &blend_mode)
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	metadata->blend_mode = aligned_optional(blend_mode);
 }
+#ifdef GRALLOC_AML_EXTEND
+void get_omx_tunnel(const private_handle_t *hnd, int32_t *am_omx_tunnel)
+{
+	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
+	*am_omx_tunnel = metadata->am_omx_tunnel;
+}
+
+void set_omx_tunnel(const private_handle_t *hnd, const int32_t am_omx_tunnel)
+{
+	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
+	metadata->am_omx_tunnel = am_omx_tunnel;
+}
+
+void get_omx_flag(const private_handle_t *hnd, int32_t *am_omx_flag)
+{
+	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
+	*am_omx_flag = metadata->am_omx_flag;
+}
+
+void set_omx_flag(const private_handle_t *hnd, const int32_t am_omx_flag)
+{
+	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
+	metadata->am_omx_flag = am_omx_flag;
+}
+
+void get_omx_video_type(const private_handle_t *hnd, int32_t *am_omx_video_type)
+{
+	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
+	*am_omx_video_type = metadata->am_omx_video_type;
+}
+
+void set_omx_video_type(const private_handle_t *hnd, const int32_t am_omx_video_type)
+{
+	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
+	metadata->am_omx_video_type = am_omx_video_type;
+}
+#endif
 
 void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086)
 {

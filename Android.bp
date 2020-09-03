@@ -165,7 +165,12 @@ cc_library_shared {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
         "android.hardware.graphics.common@1.0",
+		"arm.graphics-ndk_platform",
+        "android.hardware.graphics.mapper@4.0",
+		"libgralloctypes",
+		"libhidlbase",
     ],
 
     export_include_dirs: [
@@ -190,7 +195,12 @@ cc_library_shared {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@4.0",
+		"arm.graphics-ndk_platform",
+		"libgralloctypes",
+		"libhidlbase",
     ],
     export_include_dirs: ["amlogic"],
 }
@@ -213,6 +223,11 @@ cc_library_static {
     shared_libs: [
         "liblog",
         "libcutils",
+        "libutils",
         "android.hardware.graphics.common@1.0",
+        "android.hardware.graphics.mapper@4.0",
+		"arm.graphics-ndk_platform",
+		"libgralloctypes",
+		"libhidlbase",
     ],
 }

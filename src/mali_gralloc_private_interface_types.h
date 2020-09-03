@@ -98,18 +98,6 @@ enum
 
 	/* Dataspace - used for YUV to RGB conversion. */
 	GRALLOC_ARM_BUFFER_ATTR_DATASPACE = 5,
-/*meson graphics changes start*/
-#ifdef GRALLOC_AML_EXTEND
-    /* Amlogic: set tunnel index for omx video for pip.*/
-    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL = 6,
-
-    /* Extend by aml for update the omx flag pts/v4l */
-    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG = 7,
-
-    /* Extend by aml for update the omx video_type */
-    GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE = 8,
-#endif
-//meson graphics changes end
 
 	GRALLOC_ARM_BUFFER_ATTR_LAST
 };

@@ -33,6 +33,7 @@
 #include "4.x/gralloc_mapper_hidl_header.h"
 #endif
 
+
 namespace arm
 {
 namespace mapper
@@ -47,6 +48,7 @@ using aidl::android::hardware::graphics::common::Cta861_3;
 using aidl::android::hardware::graphics::common::BlendMode;
 using aidl::android::hardware::graphics::common::Dataspace;
 
+
 void shared_metadata_init(void *memory, std::string_view name);
 size_t shared_metadata_size();
 
@@ -60,6 +62,17 @@ void set_dataspace(const private_handle_t *hnd, const Dataspace &dataspace);
 
 void get_blend_mode(const private_handle_t *hnd, std::optional<BlendMode> *blend_mode);
 void set_blend_mode(const private_handle_t *hnd, const BlendMode &blend_mode);
+
+#ifdef GRALLOC_AML_EXTEND
+void get_omx_tunnel(const private_handle_t *hnd, int32_t *am_omx_tunnel);
+void set_omx_tunnel(const private_handle_t *hnd, const int32_t am_omx_tunnel);
+
+void get_omx_flag(const private_handle_t *hnd, int32_t *am_omx_flag);
+void set_omx_flag(const private_handle_t *hnd, const int32_t am_omx_flag);
+
+void get_omx_video_type(const private_handle_t *hnd, int32_t *am_omx_video_type);
+void set_omx_video_type(const private_handle_t *hnd, const int32_t am_omx_video_type);
+#endif
 
 void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086);
 android::status_t set_smpte2086(const private_handle_t *hnd, const std::optional<Smpte2086> &smpte2086);

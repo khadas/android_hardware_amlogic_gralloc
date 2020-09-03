@@ -513,6 +513,29 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 			}
 			break;
 		}
+#ifdef GRALLOC_AML_EXTEND
+		case ArmMetadataType::AM_OMX_TUNNEL:
+		{
+			int32_t am_omx_tunnel;
+			get_omx_tunnel(handle, &am_omx_tunnel);
+			err = android::gralloc4::encodeInt32(metadataType, am_omx_tunnel, &vec);
+			break;
+		}
+		case ArmMetadataType::AM_OMX_FLAG:
+		{
+			int32_t am_omx_flag;
+			get_omx_flag(handle, &am_omx_flag);
+			err = android::gralloc4::encodeInt32(metadataType, am_omx_flag, &vec);
+			break;
+		}
+		case ArmMetadataType::AM_OMX_VIDEO_TYPE:
+		{
+			int32_t am_omx_video_type;
+			get_omx_video_type(handle, &am_omx_video_type);
+			err = android::gralloc4::encodeInt32(metadataType, am_omx_video_type, &vec);
+			break;
+		}
+#endif
 		default:
 			err = android::BAD_VALUE;
 		}
@@ -617,6 +640,49 @@ Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &
 		}
 		return ((err) ? Error::UNSUPPORTED : Error::NONE);
 	}
+#ifdef GRALLOC_AML_EXTEND
+	else if (isArmMetadataType(metadataType))
+	{
+		android::status_t err = android::OK;
+
+		switch (getArmMetadataTypeValue(metadataType))
+		{
+		case ArmMetadataType::AM_OMX_TUNNEL:
+		{
+			int32_t am_omx_tunnel;
+			err = android::gralloc4::decodeInt32(metadataType, metadata, &am_omx_tunnel);
+			if (!err)
+			{
+				set_omx_tunnel(handle, am_omx_tunnel);
+			}
+			break;
+		}
+		case ArmMetadataType::AM_OMX_FLAG:
+		{
+			int32_t am_omx_flag;
+			err = android::gralloc4::decodeInt32(metadataType, metadata, &am_omx_flag);
+			if (!err)
+			{
+				set_omx_flag(handle, am_omx_flag);
+			}
+			break;
+		}
+		case ArmMetadataType::AM_OMX_VIDEO_TYPE:
+		{
+			int32_t am_omx_video_type;
+			err = android::gralloc4::decodeInt32(metadataType, metadata, &am_omx_video_type);
+			if (!err)
+			{
+				set_omx_video_type(handle, am_omx_video_type);
+			}
+			break;
+		}
+		default:
+			err = android::BAD_VALUE;
+		}
+		return ((err) ? Error::UNSUPPORTED : Error::NONE);
+	}
+#endif
 	else
 	{
 		/* None of the vendor types support set. */

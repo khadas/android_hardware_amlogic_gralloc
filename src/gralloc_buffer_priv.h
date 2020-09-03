@@ -39,14 +39,6 @@ struct attr_region
 	int32_t crop_width;
 	mali_hdr_info hdr_info;
 	android_dataspace_t dataspace;
-    
-//meson graphics changes start
-#ifdef GRALLOC_AML_EXTEND
-   int am_omx_tunnel;
-   int am_omx_flag;
-   int am_omx_video_type;
-#endif
-//meson graphics changes end
 
 #ifdef __cplusplus
 	attr_region()
@@ -67,13 +59,8 @@ static_assert(sizeof(android_dataspace_t) == 4, "Unexpected size");
  * The exception is the size of mali_hdr_info as there is an assertion for that alongside
  * its definition.
  */
-#ifdef GRALLOC_AML_EXTEND
-static_assert(sizeof(struct attr_region) ==
-    (8 * 4) + sizeof(mali_hdr_info), "Unexpected size");
-#else
 static_assert(sizeof(struct attr_region) ==
     (5 * 4) + sizeof(mali_hdr_info), "Unexpected size");
-#endif
 
 typedef struct attr_region attr_region;
 
@@ -195,23 +182,6 @@ static inline int gralloc_buffer_attr_write(struct private_handle_t *hnd, buf_at
 			rval = 0;
 			break;
 
-//meson graphics changes start
-#ifdef GRALLOC_AML_EXTEND
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
-           region->am_omx_tunnel = *val;
-           rval = 0;
-           break;
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
-           region->am_omx_flag = *val;
-           rval = 0;
-           break;
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
-           region->am_omx_video_type = *val;
-           rval = 0;
-           break;
-#endif
-//meson graphics changes end
-
 		case GRALLOC_ARM_BUFFER_ATTR_DATASPACE:
 			region->dataspace = *((android_dataspace_t *)val);
 			rval = 0;
@@ -253,22 +223,6 @@ static inline int gralloc_buffer_attr_read(struct private_handle_t *hnd, buf_att
 			memcpy(val, &region->hdr_info, sizeof(mali_hdr_info));
 			rval = 0;
 			break;
-//meson graphics changes start
-#ifdef GRALLOC_AML_EXTEND
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_TUNNEL:
-           region->am_omx_tunnel = *val;
-           rval = 0;
-           break;
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_FLAG:
-           region->am_omx_flag = *val;
-           rval = 0;
-           break;
-       case GRALLOC_ARM_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
-           region->am_omx_video_type = *val;
-           rval = 0;
-           break;
-#endif
-//meson graphics changes end
 
 		case GRALLOC_ARM_BUFFER_ATTR_DATASPACE:
 			*val = region->dataspace;
