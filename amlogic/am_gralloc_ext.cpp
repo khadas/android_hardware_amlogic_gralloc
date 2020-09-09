@@ -490,7 +490,7 @@ int am_gralloc_destroy_sideband_handle(native_handle_t * hnd) {
 
     int ret = GRALLOC1_ERROR_NONE;
     if (buffer) {
-        if (buffer->channel == AM_VIDEO_DEFAULT) {
+        if (buffer->channel == AM_VIDEO_DEFAULT || buffer->channel == AM_VIDEO_DEFAULT_LEGACY) {
             *channel = AM_VIDEO_DEFAULT;
         } else {
             *channel = AM_VIDEO_EXTERNAL;

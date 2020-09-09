@@ -82,6 +82,7 @@ typedef enum {
 } AM_VIDEO_TUNNEL_TYPE;
 
 typedef enum {
+    AM_VIDEO_DEFAULT_LEGACY = 0,
     AM_VIDEO_DEFAULT = 1,
     AM_VIDEO_EXTERNAL = 2
 } AM_VIDEO_CHANNEL;
