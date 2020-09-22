@@ -1234,6 +1234,34 @@ void mali_gralloc_ion_close(void)
 
 #ifdef GRALLOC_AML_EXTEND
 /*for ion alloc*/
+bool is_android_yuv_format(int req_format)
+{
+	bool rval = false;
+
+	switch (req_format)
+	{
+	case HAL_PIXEL_FORMAT_YV12:
+	case HAL_PIXEL_FORMAT_Y8:
+	case HAL_PIXEL_FORMAT_Y16:
+	case HAL_PIXEL_FORMAT_YCbCr_420_888:
+	case HAL_PIXEL_FORMAT_YCbCr_422_888:
+	case HAL_PIXEL_FORMAT_YCbCr_444_888:
+	case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+	case HAL_PIXEL_FORMAT_YCbCr_422_SP:
+	case HAL_PIXEL_FORMAT_YCBCR_422_I:
+	case HAL_PIXEL_FORMAT_RAW16:
+	case HAL_PIXEL_FORMAT_RAW12:
+	case HAL_PIXEL_FORMAT_RAW10:
+	case HAL_PIXEL_FORMAT_RAW_OPAQUE:
+	case HAL_PIXEL_FORMAT_BLOB:
+	case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+		rval = true;
+		break;
+	}
+
+	return rval;
+}
+
 enum ion_heap_type am_gralloc_pick_ion_heap(
 	buffer_descriptor_t *bufDescriptor, uint64_t usage)
 {
@@ -1269,7 +1297,8 @@ enum ion_heap_type am_gralloc_pick_ion_heap(
 	if (usage & GRALLOC_USAGE_HW_COMPOSER)
 	{
 		if ( (bufDescriptor->width <= max_composer_buf_width) &&
-			(bufDescriptor->height <= max_composer_buf_height) )
+			(bufDescriptor->height <= max_composer_buf_height) &&
+                        (!is_android_yuv_format(bufDescriptor->hal_format)))
 		{
 			ret = ION_HEAP_TYPE_DMA;
 			goto out;
