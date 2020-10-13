@@ -132,4 +132,30 @@ int am_gralloc_attr_set_omx2_v4l2_producer_flag(native_handle_t * hnd);
 int am_gralloc_attr_set_omx_pts_producer_flag(native_handle_t * hnd);
 uint64_t am_gralloc_get_enc_coherent_usage();
 
+/*
+ * attr (key) type, which should match that in mali_gralloc_private_interface_types.h
+ */
+enum
+{
+    /* set tunnel index for omx video for pip.*/
+    GRALLOC_BUFFER_ATTR_AM_OMX_TUNNEL = 6,
+
+    /* update the omx flag pts/v4l */
+    GRALLOC_BUFFER_ATTR_AM_OMX_FLAG = 7,
+
+    /* update the omx video_type */
+    GRALLOC_BUFFER_ATTR_AM_OMX_VIDEO_TYPE = 8,
+
+    /* update the omx buffer sequence*/
+    GRALLOC_BUFFER_ATTR_AM_OMX_BUFFER_SEQUENCE = 9,
+
+    GRALLOC_BUFFER_ATTR_LAST
+};
+
+/*
+ * set extend info key-value
+ */
+int am_gralloc_set_ext_attr(native_handle_t *hnd, uint32_t attr, int val);
+bool am_gralloc_get_omx_buffer_sequence(const native_handle_t *hnd, int *val);
+
 #endif/*AM_GRALLOC_EXT_H*/

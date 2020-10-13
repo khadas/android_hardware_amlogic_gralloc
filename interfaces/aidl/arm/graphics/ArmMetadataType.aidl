@@ -41,4 +41,6 @@ enum ArmMetadataType {
 
     /* Extend by aml for update the omx video_type */
     AM_OMX_VIDEO_TYPE = 4,
+    /* Extend by aml for update the omx buffer sequence*/
+    AM_OMX_BUFFER_SEQUENCE = 5,
 }

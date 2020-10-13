@@ -535,6 +535,13 @@ void get_metadata(const private_handle_t *handle, const IMapper::MetadataType &m
 			err = android::gralloc4::encodeInt32(metadataType, am_omx_video_type, &vec);
 			break;
 		}
+		case ArmMetadataType::AM_OMX_BUFFER_SEQUENCE:
+		{
+			int32_t am_omx_buffer_sequence;
+			get_omx_buffer_sequence(handle, &am_omx_buffer_sequence);
+			err = android::gralloc4::encodeInt32(metadataType, am_omx_buffer_sequence, &vec);
+			break;
+		}
 #endif
 		default:
 			err = android::BAD_VALUE;
@@ -674,6 +681,16 @@ Error set_metadata(const private_handle_t *handle, const IMapper::MetadataType &
 			if (!err)
 			{
 				set_omx_video_type(handle, am_omx_video_type);
+			}
+			break;
+		}
+		case ArmMetadataType::AM_OMX_BUFFER_SEQUENCE:
+		{
+			int32_t am_omx_buffer_sequence;
+			err = android::gralloc4::decodeInt32(metadataType, metadata, &am_omx_buffer_sequence);
+			if (!err)
+			{
+				set_omx_buffer_sequence(handle, am_omx_buffer_sequence);
 			}
 			break;
 		}

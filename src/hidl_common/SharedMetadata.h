@@ -72,6 +72,9 @@ void set_omx_flag(const private_handle_t *hnd, const int32_t am_omx_flag);
 
 void get_omx_video_type(const private_handle_t *hnd, int32_t *am_omx_video_type);
 void set_omx_video_type(const private_handle_t *hnd, const int32_t am_omx_video_type);
+
+void get_omx_buffer_sequence(const private_handle_t *hnd, int32_t *am_omx_buffer_sequence);
+void set_omx_buffer_sequence(const private_handle_t *hnd, const int32_t am_omx_buffer_sequence);
 #endif
 
 void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086);

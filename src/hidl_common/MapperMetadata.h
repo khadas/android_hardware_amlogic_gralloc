@@ -59,6 +59,9 @@ const static IMapper::MetadataType ArmMetadataType_AM_OMX_FLAG{ GRALLOC_ARM_META
 
 const static IMapper::MetadataType ArmMetadataType_AM_OMX_VIDEO_TYPE{ GRALLOC_ARM_METADATA_TYPE_NAME,
                                                   static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_VIDEO_TYPE) };
+
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_BUFFER_SEQUENCE{ GRALLOC_ARM_METADATA_TYPE_NAME,
+                                                  static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_BUFFER_SEQUENCE) };
 #endif
 
 

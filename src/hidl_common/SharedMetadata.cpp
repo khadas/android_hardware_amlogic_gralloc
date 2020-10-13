@@ -100,6 +100,7 @@ struct shared_metadata
 	int32_t am_omx_tunnel;
 	int32_t am_omx_flag;
 	int32_t am_omx_video_type;
+    int32_t am_omx_buffer_sequence;
 #endif
 	shared_metadata() = default;
 
@@ -148,8 +149,11 @@ static_assert(sizeof(shared_metadata::am_omx_flag) == 4, "bad size");
 static_assert(offsetof(shared_metadata, am_omx_video_type) == 2412, "bad alignment");
 static_assert(sizeof(shared_metadata::am_omx_video_type) == 4, "bad size");
 
+static_assert(offsetof(shared_metadata, am_omx_buffer_sequence) == 2416, "bad alignment");
+static_assert(sizeof(shared_metadata::am_omx_buffer_sequence) == 4, "bad size");
+
 static_assert(alignof(shared_metadata) == 4, "bad alignment");
-static_assert(sizeof(shared_metadata) == 2416, "bad size");
+static_assert(sizeof(shared_metadata) == 2420, "bad size");
 #else
 static_assert(alignof(shared_metadata) == 4, "bad alignment");
 static_assert(sizeof(shared_metadata) == 2404, "bad size");
@@ -253,6 +257,19 @@ void set_omx_video_type(const private_handle_t *hnd, const int32_t am_omx_video_
 	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
 	metadata->am_omx_video_type = am_omx_video_type;
 }
+
+void get_omx_buffer_sequence(const private_handle_t *hnd, int32_t *am_omx_buffer_sequence)
+{
+	auto *metadata = reinterpret_cast<const shared_metadata *>(hnd->attr_base);
+	*am_omx_buffer_sequence = metadata->am_omx_buffer_sequence;
+}
+
+void set_omx_buffer_sequence(const private_handle_t *hnd, const int32_t am_omx_buffer_sequence)
+{
+	auto *metadata = reinterpret_cast<shared_metadata *>(hnd->attr_base);
+	metadata->am_omx_buffer_sequence = am_omx_buffer_sequence;
+}
+
 #endif
 
 void get_smpte2086(const private_handle_t *hnd, std::optional<Smpte2086> *smpte2086)

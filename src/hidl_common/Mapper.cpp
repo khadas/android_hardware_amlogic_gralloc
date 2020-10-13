@@ -841,6 +841,8 @@ void listSupportedMetadataTypes(IMapper::listSupportedMetadataTypes_cb hidl_cb)
 			"Extend by aml for update the omx flag pts/v4l", true, true },
 		{ ArmMetadataType_AM_OMX_VIDEO_TYPE,
 			"Extend by aml for update the omx video_type", true, true },
+		{ ArmMetadataType_AM_OMX_BUFFER_SEQUENCE,
+			"Extend by aml for update the omx buffer sequence", true, true },
 #endif
 	};
 	hidl_cb(Error::NONE, descriptions);

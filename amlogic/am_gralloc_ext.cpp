@@ -51,6 +51,9 @@ const static IMapper::MetadataType ArmMetadataType_AM_OMX_VIDEO_TYPE{
     static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_VIDEO_TYPE)
 };
 
+const static IMapper::MetadataType ArmMetadataType_AM_OMX_BUFFER_SEQUENCE{ GRALLOC_ARM_METADATA_TYPE_NAME,
+    static_cast<int64_t>(aidl::arm::graphics::ArmMetadataType::AM_OMX_BUFFER_SEQUENCE) };
+
 static IMapper &get_service()
 {
   static android::sp<IMapper> cached_service = IMapper::getService();
@@ -658,3 +661,58 @@ int am_gralloc_attr_set_omx_pts_producer_flag(
 uint64_t am_gralloc_get_enc_coherent_usage() {
     return am_gralloc_get_omx_osd_producer_usage();
 }
+
+
+int am_gralloc_set_ext_attr(native_handle_t * hnd, uint32_t attr, int val) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    int ret = GRALLOC1_ERROR_NONE;
+
+    if (buffer) {
+    IMapper::MetadataType type;
+    switch (attr) {
+        case GRALLOC_BUFFER_ATTR_AM_OMX_TUNNEL:
+            type = ArmMetadataType_AM_OMX_TUNNEL;
+            break;
+        case GRALLOC_BUFFER_ATTR_AM_OMX_FLAG:
+            type = ArmMetadataType_AM_OMX_FLAG;
+            break;
+        case GRALLOC_BUFFER_ATTR_AM_OMX_VIDEO_TYPE:
+            type = ArmMetadataType_AM_OMX_VIDEO_TYPE;
+            break;
+        case GRALLOC_BUFFER_ATTR_AM_OMX_BUFFER_SEQUENCE:
+            /*GRALLOC_BUFFER_ATTR_AM_OMX_BUFFER_SEQUENCE: -1 is invalid value*/
+            if (val == -1) {
+                ALOGE("Set invalid value for OMX_BUFFER_SEQUENCE");
+                return GRALLOC1_ERROR_BAD_VALUE;
+            } else {
+                type = ArmMetadataType_AM_OMX_BUFFER_SEQUENCE;
+                break;
+            }
+        default:
+            ALOGE("set invalid attr :%d", attr);
+            return GRALLOC1_ERROR_BAD_VALUE;
+    }
+        ret = am_gralloc_ext_set_ext_attr(hnd, type, val);
+    } else {
+        ret = GRALLOC1_ERROR_BAD_HANDLE;
+    }
+
+    return ret;
+}
+
+bool am_gralloc_get_omx_buffer_sequence(const native_handle_t * hnd, int *val) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_VIDEO_OMX)) {
+        int ret = GRALLOC1_ERROR_NONE;
+        int omx_buffer_sequence;
+        ret = am_gralloc_ext_get_ext_attr(hnd,
+                ArmMetadataType_AM_OMX_BUFFER_SEQUENCE, &omx_buffer_sequence);
+        if (ret == GRALLOC1_ERROR_NONE) {
+            *val = omx_buffer_sequence;
+            return true;
+        }
+    }
+
+    return false;
+}
+
