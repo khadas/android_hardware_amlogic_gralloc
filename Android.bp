@@ -178,33 +178,6 @@ cc_library_shared {
     ],
 }
 
-cc_library_shared {
-    name: "libamgralloc_ext_vendor@2",
-    vendor: true,
-    cflags: [
-        "-DUSE_BUFFER_USAGE=1",
-        "-DGRALLOC_AML_EXTEND",
-    ],
-    include_dirs: [
-        "hardware/libhardware/include",
-        "hardware/amlogic/gralloc/src",
-    ],
-    srcs: [
-        "amlogic/am_gralloc_ext.cpp"
-    ],
-    shared_libs: [
-        "liblog",
-        "libcutils",
-        "libutils",
-        "android.hardware.graphics.common@1.0",
-        "android.hardware.graphics.mapper@4.0",
-		"arm.graphics-ndk_platform",
-		"libgralloctypes",
-		"libhidlbase",
-    ],
-    export_include_dirs: ["amlogic"],
-}
-
 cc_library_static {
     name: "libamgralloc_ext_static@2",
     cflags: [

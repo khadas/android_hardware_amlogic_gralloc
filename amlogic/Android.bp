@@ -37,6 +37,7 @@ cc_library_shared {
         "hardware/amlogic/gralloc/src",
     ],
     srcs: ["am_gralloc_ext.cpp"],
+    export_include_dirs: ["."],
 }
 
 cc_library_static {
