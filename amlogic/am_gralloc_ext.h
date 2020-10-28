@@ -22,6 +22,9 @@ all producer usage is in android.hardware.graphics.common@1.0.BufferUsage.
 uint64_t am_gralloc_get_video_overlay_producer_usage();
 uint64_t am_gralloc_get_omx_metadata_producer_usage();
 uint64_t am_gralloc_get_omx_osd_producer_usage();
+uint64_t am_gralloc_get_video_decoder_quarter_buffer_usage();
+uint64_t am_gralloc_get_video_decoder_one_sixteenth_buffer_usage();
+
 
 /*
 For modules
@@ -125,6 +128,7 @@ typedef enum {
     AM_PRIV_ATTR_OMX_V4L_PRODUCER = (1 << 1),
     AM_PRIV_ATTR_OMX2_V4L2_PRODUCER = (1 << 2),
 } AM_PRIV_ATTR_MASK;
+
 
 int am_gralloc_get_omx_v4l_file(const native_handle_t * hnd);
 int am_gralloc_attr_set_omx_v4l_producer_flag(native_handle_t * hnd);

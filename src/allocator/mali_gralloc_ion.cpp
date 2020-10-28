@@ -829,8 +829,9 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 	uint32_t delay_alloc = 0;
 	int uvm_fd = -1;
-	uint32_t uvm_flags = 0;
+	uint32_t uvm_flags = UVM_IMM_ALLOC;
 	int ret;
+	int buf_scalar = 1;
 #endif
 
 	ion_device *dev = ion_device::get();
@@ -876,8 +877,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
 
 			if (am_gralloc_is_omx_osd_extend_usage(usage)) {
-				uvm_flags = UVM_IMM_ALLOC;
-				delay_alloc = 0;
+				buf_scalar = 1;
+			} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
+				buf_scalar = 2;
+			} else if (am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
+				buf_scalar = 4;
 			} else {
 				uvm_flags = UVM_DELAY_ALLOC;
 				delay_alloc = 1;
@@ -894,10 +898,14 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.height = max_bufDescriptor->height,
 				.align = 0,
 				.flags = uvm_flags,
+				.scalar = buf_scalar
 			};
 			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
-			if (ret < 0)
+			if (ret < 0) {
+				MALI_GRALLOC_LOGE("%s, ioctl::UVM_IOC_ALLOC failed uvm_fd=%d",
+					__func__, uvm_fd);
 				return ret;
+			}
 			ALOGE("ioctl UVM_IOC_ALLOC fd sharefd: %d\n", uad.fd);
 			shared_fd = uad.fd;
 		} else {
@@ -905,11 +913,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			delay_alloc = 0;
 		}
 		/*update private heap flag*/
-        am_gralloc_set_ion_flags(heap_type, usage, &priv_heap_flag, NULL);
+		am_gralloc_set_ion_flags(heap_type, usage, &priv_heap_flag, NULL);
 #else
-        set_ion_flags(heap_type, usage, &priv_heap_flag, &ion_flags);
+		set_ion_flags(heap_type, usage, &priv_heap_flag, &ion_flags);
 
-        shared_fd = dev->alloc_from_ion_heap(usage, max_bufDescriptor->size, heap_type, ion_flags, &min_pgsz);
+		shared_fd = dev->alloc_from_ion_heap(usage, max_bufDescriptor->size, heap_type, ion_flags, &min_pgsz);
 #endif
 //meson graphics changes end
 
@@ -957,7 +965,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
 			    bufDescriptor->old_alloc_width, bufDescriptor->old_alloc_height, bufDescriptor->old_byte_stride,
 			    max_bufDescriptor->size, bufDescriptor->layer_count, bufDescriptor->plane_info);
-
+#ifdef AML_GRALLOC_DEBUG
+			AML_GRALLOC_LOGI("%s: width:%d height:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
+				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height,
+				    bufDescriptor->hal_format, usage);
+#endif
 			if (NULL == hnd)
 			{
 				MALI_GRALLOC_LOGE("Private handle could not be created for descriptor:%d of shared usecase", i);
@@ -1010,15 +1022,18 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-            am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
+			am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
 
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 				am_gralloc_is_omx_metadata_extend_usage(usage) ||
 				am_gralloc_is_omx_osd_extend_usage(usage)) {
 
 				if (am_gralloc_is_omx_osd_extend_usage(usage)) {
-					uvm_flags = UVM_IMM_ALLOC;
-					delay_alloc = 0;
+					buf_scalar = 1;
+				} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
+					buf_scalar = 2;
+				} else if (am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
+					buf_scalar = 4;
 				} else {
 					uvm_flags = UVM_DELAY_ALLOC;
 					delay_alloc = 1;
@@ -1027,6 +1042,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				if (usage & GRALLOC_USAGE_PROTECTED) {
 					uvm_flags |= UVM_USAGE_PROTECTED;
 			}
+
 				struct uvm_alloc_data uad = {
 					.size = (int)bufDescriptor->size,
 					.byte_stride = bufDescriptor->pixel_stride,
@@ -1034,11 +1050,16 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 					.height = bufDescriptor->height,
 					.align = 0,
 					.flags = uvm_flags,
+					.scalar = buf_scalar
 				};
 
 				ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
-				if (ret < 0)
+				if (ret < 0) {
+					MALI_GRALLOC_LOGE("%s, ioctl::UVM_IOC_ALLOC failed uvm_fd=%d",
+						__func__, uvm_fd);
 					return ret;
+				}
+
 				shared_fd = uad.fd;
 			} else {
 				shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
@@ -1046,8 +1067,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			}
 			am_gralloc_set_ion_flags(heap_type, usage, &priv_heap_flag, NULL);
 #else
-            set_ion_flags(heap_type, usage, &priv_heap_flag, &ion_flags);
-            shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, heap_type, ion_flags, &min_pgsz);
+			set_ion_flags(heap_type, usage, &priv_heap_flag, &ion_flags);
+			shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, heap_type, ion_flags, &min_pgsz);
 #endif
 //meson graphics changes end
 
@@ -1068,7 +1089,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
 			    bufDescriptor->old_alloc_width, bufDescriptor->old_alloc_height, bufDescriptor->old_byte_stride,
 			    bufDescriptor->size, bufDescriptor->layer_count, bufDescriptor->plane_info);
-
+#ifdef AML_GRALLOC_DEBUG
+			AML_GRALLOC_LOGI("%s: width:%d height:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
+				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height,
+				    bufDescriptor->hal_format, usage);
+#endif
 			if (NULL == hnd)
 			{
 				MALI_GRALLOC_LOGE("Private handle could not be created for descriptor:%d in non-shared usecase", i);
@@ -1100,6 +1125,13 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		if (!(usage & GRALLOC_USAGE_PROTECTED))
 #endif
 		{
+#ifdef GRALLOC_AML_EXTEND
+			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+				am_gralloc_is_omx_metadata_extend_usage(usage) ||
+				am_gralloc_is_omx_osd_extend_usage(usage)) {
+				break;
+			}
+#endif
 			cpu_ptr =
 			    (unsigned char *)mmap(NULL, bufDescriptor->size, PROT_READ | PROT_WRITE, MAP_SHARED, hnd->share_fd, 0);
 
@@ -1171,6 +1203,12 @@ int mali_gralloc_ion_map(private_handle_t *hnd)
         if (!dev) {
             return -1;
         }
+		uint64_t usage = hnd->producer_usage | hnd->consumer_usage;
+		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+			am_gralloc_is_omx_metadata_extend_usage(usage) ||
+			am_gralloc_is_omx_osd_extend_usage(usage)) {
+			return 0;
+		}
         ion_user_handle_t user_hnd;
         ion_import(dev->client(), hnd->share_fd, &user_hnd);
 #endif
@@ -1204,7 +1242,13 @@ void mali_gralloc_ion_unmap(private_handle_t *hnd)
 		size_t size = hnd->size;
 
 #ifdef GRALLOC_AML_EXTEND
-        if (!hnd->ion_delay_alloc && munmap(base, size) < 0)
+		uint64_t usage = hnd->producer_usage | hnd->consumer_usage;
+		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+			am_gralloc_is_omx_metadata_extend_usage(usage) ||
+			am_gralloc_is_omx_osd_extend_usage(usage)) {
+			break;
+		}
+		if (!hnd->ion_delay_alloc && munmap(base, size) < 0)
 #else
 		if (munmap(base, size) < 0)
 #endif

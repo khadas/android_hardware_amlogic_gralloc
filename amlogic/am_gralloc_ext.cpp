@@ -16,6 +16,7 @@
 #endif
 #include <gralloc_priv.h>
 #include "gralloc_buffer_priv.h"
+#include "mali_gralloc_usages.h"
 
 #include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <gralloctypes/Gralloc4.h>
@@ -195,6 +196,17 @@ bool am_gralloc_is_omx_metadata_producer(uint64_t usage) {
     return false;
 }
 #endif
+
+uint64_t am_gralloc_get_video_decoder_quarter_buffer_usage() {
+    uint64_t omx_metadata_usage = am_gralloc_get_omx_metadata_producer_usage();
+    return (MESON_GRALLOC_USAGE_VIDEO_DECODER_QUARTER |
+            omx_metadata_usage);
+}
+uint64_t am_gralloc_get_video_decoder_one_sixteenth_buffer_usage() {
+    uint64_t omx_metadata_usage = am_gralloc_get_omx_metadata_producer_usage();
+    return (MESON_GRALLOC_USAGE_VIDEO_DECODER_ONE_SIXTEENTH |
+            omx_metadata_usage);
+}
 
 bool am_gralloc_is_omx_osd_producer(uint64_t usage) {
     uint64_t omx_osd_usage = am_gralloc_get_omx_osd_producer_usage();

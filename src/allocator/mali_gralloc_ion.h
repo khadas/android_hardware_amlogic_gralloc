@@ -42,6 +42,7 @@ struct uvm_alloc_data {
 	int byte_stride;
 	uint32_t width;
 	uint32_t height;
+	int scalar;
 };
 
 #define UVM_IMM_ALLOC        (1 << 0)

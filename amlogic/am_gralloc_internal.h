@@ -23,6 +23,8 @@ The usage is usage defined in gralloc.h/gralloc1.h.
 bool am_gralloc_is_omx_metadata_extend_usage(uint64_t usage);
 bool am_gralloc_is_omx_osd_extend_usage(uint64_t usage);
 bool am_gralloc_is_video_overlay_extend_usage(uint64_t usage);
+bool am_gralloc_is_video_decoder_quarter_buffer_usage(uint64_t usage);
+bool am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(uint64_t usage);
 bool am_gralloc_is_secure_extend_usage(uint64_t usage);
 
 
