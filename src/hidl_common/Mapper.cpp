@@ -31,6 +31,7 @@
 #include "mali_gralloc_buffer.h"
 #include "mali_gralloc_log.h"
 #include "gralloc_buffer_priv.h"
+#include "mali_gralloc_formats.h"
 
 #ifdef GRALLOC_AML_EXTEND
 #include "../amlogic/am_gralloc_internal.h"
@@ -193,7 +194,8 @@ static Error lockBuffer(buffer_handle_t bufferHandle,
 	}
 
 	auto private_handle = private_handle_t::dynamicCast(bufferHandle);
-	if (private_handle->cpu_write != 0 && (cpuUsage & BufferUsage::CPU_WRITE_MASK))
+	if (private_handle->cpu_write != 0 && (cpuUsage & BufferUsage::CPU_WRITE_MASK)
+		&& private_handle->req_format != MALI_GRALLOC_FORMAT_INTERNAL_BLOB)
 	{
 		if (fenceFd >= 0)
 		{
