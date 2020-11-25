@@ -883,6 +883,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				delay_alloc = 1;
 			}
 
+			if (usage & GRALLOC_USAGE_PROTECTED) {
+				uvm_flags |= UVM_USAGE_PROTECTED;
+			}
+
 			struct uvm_alloc_data uad = {
 				.size = (int)max_bufDescriptor->size,
 				.byte_stride = max_bufDescriptor->pixel_stride,
@@ -891,7 +895,6 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.align = 0,
 				.flags = uvm_flags,
 			};
-
 			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
 			if (ret < 0)
 				return ret;
@@ -1020,6 +1023,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 					uvm_flags = UVM_DELAY_ALLOC;
 					delay_alloc = 1;
 				}
+
+				if (usage & GRALLOC_USAGE_PROTECTED) {
+					uvm_flags |= UVM_USAGE_PROTECTED;
+			}
 				struct uvm_alloc_data uad = {
 					.size = (int)bufDescriptor->size,
 					.byte_stride = bufDescriptor->pixel_stride,
