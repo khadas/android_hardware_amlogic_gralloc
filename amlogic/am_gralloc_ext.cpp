@@ -518,10 +518,14 @@ int am_gralloc_destroy_sideband_handle(native_handle_t * hnd) {
 
     int ret = GRALLOC1_ERROR_NONE;
     if (buffer) {
-        if (buffer->channel == AM_VIDEO_DEFAULT || buffer->channel == AM_VIDEO_DEFAULT_LEGACY) {
-            *channel = AM_VIDEO_DEFAULT;
+        if (buffer->flags == private_handle_t::PRIV_FLAGS_VIDEO_TUNNEL) {
+            *channel = buffer->channel;
         } else {
-            *channel = AM_VIDEO_EXTERNAL;
+            if (buffer->channel == AM_VIDEO_DEFAULT || buffer->channel == AM_VIDEO_DEFAULT_LEGACY) {
+                *channel = AM_VIDEO_DEFAULT;
+            } else {
+                *channel = AM_VIDEO_EXTERNAL;
+            }
         }
     } else {
         ret = GRALLOC1_ERROR_BAD_HANDLE;
