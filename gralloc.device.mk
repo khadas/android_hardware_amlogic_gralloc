@@ -40,6 +40,12 @@ GRALLOC_AML_EXTEND?=1
 ifeq ($(GRALLOC_AML_EXTEND),1)
 BOARD_RESOLUTION_RATIO ?= 1080
 
+ifeq ($(TARGET_BUILD_KERNEL_4_9), true)
+BUILD_KERNEL_4_9 ?= true
+endif
+
+GRALLOC_USE_NEW_ION := $(shell expr $(PLATFORM_SDK_VERSION) \>= 30)
+
 ifeq ($(TARGET_APP_LAYER_USE_CONTINUOUS_BUFFER),true)
 AML_ALLOC_SCANOUT_FOR_COMPOSE :=1
 endif
@@ -151,6 +157,8 @@ SOONG_CONFIG_arm_gralloc := \
 	use_buffer_age \
 	alloc_scanout \
 	board_resolution \
+	gralloc_use_new_ion \
+	build_kernel_4_9 \
 	mali_video_version \
 	mali_display_version \
 	gralloc_use_ion_dma_heap \
@@ -170,6 +178,8 @@ SOONG_CONFIG_arm_gralloc_mali_gpu_support_afbc_wideblk := $(MALI_GPU_SUPPORT_AFB
 SOONG_CONFIG_arm_gralloc_mali_gpu_support_afbc_tiled_headers := $(MALI_GPU_SUPPORT_AFBC_TILED_HEADERS)
 SOONG_CONFIG_arm_gralloc_mali_gpu_support_afbc_yuv_write := $(MALI_GPU_SUPPORT_AFBC_YUV_WRITE)
 SOONG_CONFIG_arm_gralloc_meson_extend := $(GRALLOC_AML_EXTEND)
+SOONG_CONFIG_arm_gralloc_gralloc_use_new_ion := $(GRALLOC_USE_NEW_ION)
+SOONG_CONFIG_arm_gralloc_build_kernel_4_9 := $(BUILD_KERNEL_4_9)
 SOONG_CONFIG_arm_gralloc_use_buffer_age := $(MESON_GR_USE_BUFFER_USAGE)
 SOONG_CONFIG_arm_gralloc_alloc_scanout := $(AML_ALLOC_SCANOUT_FOR_COMPOSE)
 SOONG_CONFIG_arm_gralloc_board_resolution := v$(BOARD_RESOLUTION_RATIO)

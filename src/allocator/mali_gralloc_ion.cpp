@@ -27,11 +27,13 @@
 #include <cutils/atomic.h>
 
 #ifdef GRALLOC_AML_EXTEND
+#if GRALLOC_USE_NEW_ION == 1
 #include "ion/ion_5.4.h"
 #include "ion/ion_54.h"
 #else
 #include <ion/ion.h>
 #include <ion/ion_4.12.h>
+#endif
 #endif
 
 #include <linux/dma-buf.h>
@@ -54,8 +56,11 @@
 #include "mali_gralloc_ion.h"
 #include <map>
 
+#ifdef BUILD_KERNEL_4_9
 static std::map<int, ion_user_handle_t> imported_user_hnd;
 static std::map<int, int> imported_ion_client;
+#endif
+
 #endif
 
 //meson graphics changes start
@@ -176,7 +181,7 @@ struct ion_device
 private:
 	int ion_client;
 #ifdef GRALLOC_AML_EXTEND
-    int uvm_dev;
+	int uvm_dev;
 #endif
 	bool use_legacy_ion;
 	bool secure_heap_exists;
@@ -540,7 +545,6 @@ static int get_max_buffer_descriptor_index(const gralloc_buffer_descriptor_t *de
 int ion_device::open_and_query_ion()
 {
 	int ret = -1;
-
 	if (ion_client >= 0)
 	{
 		MALI_GRALLOC_LOGW("ION device already open");
@@ -556,7 +560,18 @@ int ion_device::open_and_query_ion()
 
 	INIT_ZERO(heap_info);
 	heap_cnt = 0;
+
+#ifdef GRALLOC_AML_EXTEND
+
+#ifdef GRALLOC_USE_NEW_ION
+	use_legacy_ion = false;
+#else
+	use_legacy_ion = true;
+#endif
+
+#else
 	use_legacy_ion = (ion_is_legacy(ion_client) != 0);
+#endif
 
 	if (use_legacy_ion == false)
 	{
@@ -1196,26 +1211,30 @@ int mali_gralloc_ion_map(private_handle_t *hnd)
 		size_t size = hnd->size;
 
 #ifdef GRALLOC_AML_EXTEND
-        if (hnd->ion_delay_alloc)
-            return 0;
+		if (hnd->ion_delay_alloc)
+			return 0;
 
-        ion_device *dev = ion_device::get();
-        if (!dev) {
-            return -1;
-        }
+#ifdef BUILD_KERNEL_4_9
+		ion_device *dev = ion_device::get();
+		if (!dev) {
+			return -1;
+		}
+		ion_user_handle_t user_hnd;
+		ion_import(dev->client(), hnd->share_fd, &user_hnd);
+#endif
 		uint64_t usage = hnd->producer_usage | hnd->consumer_usage;
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 			am_gralloc_is_omx_metadata_extend_usage(usage) ||
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
 			return 0;
 		}
-        ion_user_handle_t user_hnd;
-        ion_import(dev->client(), hnd->share_fd, &user_hnd);
 #endif
 		unsigned char *mappedAddress = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, hnd->share_fd, 0);
 #ifdef GRALLOC_AML_EXTEND
+#ifdef BUILD_KERNEL_4_9
 		imported_ion_client.emplace(hnd->share_fd, dev->client());
 		imported_user_hnd.emplace(hnd->share_fd, user_hnd);
+#endif
 #endif
 
 		if (MAP_FAILED == mappedAddress)
@@ -1262,6 +1281,7 @@ void mali_gralloc_ion_unmap(private_handle_t *hnd)
 			hnd->cpu_write = 0;
 		}
 #ifdef GRALLOC_AML_EXTEND
+#ifdef BUILD_KERNEL_4_9
 		auto user_hnd_iter = imported_user_hnd.find(hnd->share_fd);
 		auto ion_client_iter = imported_ion_client.find(hnd->share_fd);
 		if (user_hnd_iter != imported_user_hnd.end()
@@ -1270,6 +1290,7 @@ void mali_gralloc_ion_unmap(private_handle_t *hnd)
 			imported_user_hnd.erase(user_hnd_iter);
 			imported_ion_client.erase(ion_client_iter);
 		}
+#endif
 #endif
 		break;
 	}

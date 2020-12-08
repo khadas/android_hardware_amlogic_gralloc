@@ -25,6 +25,8 @@ soong_config_module_type {
 		"gralloc_use_ion_compound_page_heap",
 		"gralloc_init_afbc",
 		"gralloc_use_ion_dmabuf_sync",
+		"gralloc_use_new_ion",
+		"build_kernel_4_9",
 	],
 	properties: [
 		"cflags",
@@ -45,6 +47,12 @@ soong_config_bool_variable {
 }
 soong_config_bool_variable {
 	name: "gralloc_use_ion_dmabuf_sync",
+}
+soong_config_bool_variable {
+	name: "gralloc_use_new_ion",
+}
+soong_config_bool_variable {
+	name: "build_kernel_4_9",
 }
 
 arm_gralloc_allocator_cc_defaults {
@@ -76,6 +84,16 @@ arm_gralloc_allocator_cc_defaults {
 		gralloc_use_ion_dmabuf_sync: {
 			cflags: [
 				"-DGRALLOC_USE_ION_DMABUF_SYNC=1",
+			],
+		},
+		gralloc_use_new_ion: {
+			cflags: [
+				"-DGRALLOC_USE_NEW_ION=1",
+			],
+		},
+		build_kernel_4_9: {
+			cflags: [
+				"-DBUILD_KERNEL_4_9=1",
 			],
 		},
 	},
