@@ -102,6 +102,30 @@ bool am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(
     return false;
 }
 
+bool am_gralloc_is_video_decoder_full_buffer_usage(
+    uint64_t usage) {
+#if USE_BUFFER_USAGE
+    uint64_t video_decoder_full_buffer_usage = MESON_GRALLOC_USAGE_VIDEO_DECODER_FULL;
+    if (am_gralloc_is_omx_metadata_extend_usage(usage)
+        && ((usage & video_decoder_full_buffer_usage) == video_decoder_full_buffer_usage)) {
+        return true;
+    }
+#endif
+    return false;
+}
+
+bool am_gralloc_is_video_decoder_OSD_buffer_usage(
+    uint64_t usage) {
+#if USE_BUFFER_USAGE
+    uint64_t video_decoder_osd_buffer_usage = MESON_GRALLOC_USAGE_VIDEO_DECODER_FULL;
+    if (am_gralloc_is_omx_osd_extend_usage(usage)
+        && ((usage & video_decoder_osd_buffer_usage) == video_decoder_osd_buffer_usage)) {
+        return true;
+    }
+#endif
+    return false;
+}
+
 bool am_gralloc_is_secure_extend_usage(
     uint64_t usage) {
 #if USE_BUFFER_USAGE
@@ -134,3 +158,15 @@ int am_gralloc_get_video_overlay_extend_flag() {
 int am_gralloc_get_secure_extend_flag() {
     return private_handle_t::PRIV_FLAGS_SECURE_PROTECTED;
 }
+
+bool need_do_width_height_align(uint64_t usage,
+    int width, int height) {
+    if ((am_gralloc_is_omx_osd_extend_usage(usage) &&
+        width == 100 && height == 100)
+        || (am_gralloc_is_video_decoder_full_buffer_usage(usage))
+        || (am_gralloc_is_video_decoder_OSD_buffer_usage(usage)))
+        return true;
+    else
+        return false;
+}
+

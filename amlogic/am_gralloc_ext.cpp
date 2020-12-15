@@ -202,10 +202,23 @@ uint64_t am_gralloc_get_video_decoder_quarter_buffer_usage() {
     return (MESON_GRALLOC_USAGE_VIDEO_DECODER_QUARTER |
             omx_metadata_usage);
 }
+
 uint64_t am_gralloc_get_video_decoder_one_sixteenth_buffer_usage() {
     uint64_t omx_metadata_usage = am_gralloc_get_omx_metadata_producer_usage();
     return (MESON_GRALLOC_USAGE_VIDEO_DECODER_ONE_SIXTEENTH |
             omx_metadata_usage);
+}
+
+uint64_t am_gralloc_get_video_decoder_full_buffer_usage() {
+    uint64_t omx_metadata_usage = am_gralloc_get_omx_metadata_producer_usage();
+    return (MESON_GRALLOC_USAGE_VIDEO_DECODER_FULL |
+            omx_metadata_usage);
+}
+
+uint64_t am_gralloc_get_video_decoder_OSD_buffer_usage() {
+    uint64_t omx_osd_usage = am_gralloc_get_omx_osd_producer_usage();
+    return (MESON_GRALLOC_USAGE_VIDEO_DECODER_FULL |
+            omx_osd_usage);
 }
 
 bool am_gralloc_is_omx_osd_producer(uint64_t usage) {

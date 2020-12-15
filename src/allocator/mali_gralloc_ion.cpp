@@ -891,7 +891,9 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			am_gralloc_is_omx_metadata_extend_usage(usage) ||
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
 
-			if (am_gralloc_is_omx_osd_extend_usage(usage)) {
+			if (am_gralloc_is_omx_osd_extend_usage(usage) ||
+				am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
+				am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
 				buf_scalar = 1;
 			} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
 				buf_scalar = 2;
@@ -981,8 +983,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			    bufDescriptor->old_alloc_width, bufDescriptor->old_alloc_height, bufDescriptor->old_byte_stride,
 			    max_bufDescriptor->size, bufDescriptor->layer_count, bufDescriptor->plane_info);
 #ifdef AML_GRALLOC_DEBUG
-			AML_GRALLOC_LOGI("%s: width:%d height:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
-				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height,
+			AML_GRALLOC_LOGI("%s: width:%d height:%d stride:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
+				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
 				    bufDescriptor->hal_format, usage);
 #endif
 			if (NULL == hnd)
@@ -1043,7 +1045,9 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				am_gralloc_is_omx_metadata_extend_usage(usage) ||
 				am_gralloc_is_omx_osd_extend_usage(usage)) {
 
-				if (am_gralloc_is_omx_osd_extend_usage(usage)) {
+				if (am_gralloc_is_omx_osd_extend_usage(usage) ||
+					am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
+					am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
 					buf_scalar = 1;
 				} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
 					buf_scalar = 2;
@@ -1105,8 +1109,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			    bufDescriptor->old_alloc_width, bufDescriptor->old_alloc_height, bufDescriptor->old_byte_stride,
 			    bufDescriptor->size, bufDescriptor->layer_count, bufDescriptor->plane_info);
 #ifdef AML_GRALLOC_DEBUG
-			AML_GRALLOC_LOGI("%s: width:%d height:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
-				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height,
+			AML_GRALLOC_LOGI("%s: width:%d height:%d stride:%d format=0x%" PRIx64 " usage=0x%" PRIx64,
+				    __FUNCTION__, bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
 				    bufDescriptor->hal_format, usage);
 #endif
 			if (NULL == hnd)
@@ -1135,17 +1139,16 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		usage = bufDescriptor->consumer_usage | bufDescriptor->producer_usage;
 
 #ifdef GRALLOC_AML_EXTEND
-        if (!(usage & GRALLOC_USAGE_PROTECTED) && !hnd->ion_delay_alloc)
+		if (!(usage & GRALLOC_USAGE_PROTECTED) && !hnd->ion_delay_alloc)
 #else
 		if (!(usage & GRALLOC_USAGE_PROTECTED))
 #endif
 		{
 #ifdef GRALLOC_AML_EXTEND
-			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-				am_gralloc_is_omx_metadata_extend_usage(usage) ||
-				am_gralloc_is_omx_osd_extend_usage(usage)) {
+		if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage) ||
+			am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
 				break;
-			}
+		}
 #endif
 			cpu_ptr =
 			    (unsigned char *)mmap(NULL, bufDescriptor->size, PROT_READ | PROT_WRITE, MAP_SHARED, hnd->share_fd, 0);
@@ -1223,9 +1226,8 @@ int mali_gralloc_ion_map(private_handle_t *hnd)
 		ion_import(dev->client(), hnd->share_fd, &user_hnd);
 #endif
 		uint64_t usage = hnd->producer_usage | hnd->consumer_usage;
-		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-			am_gralloc_is_omx_metadata_extend_usage(usage) ||
-			am_gralloc_is_omx_osd_extend_usage(usage)) {
+		if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage) ||
+			am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
 			return 0;
 		}
 #endif
@@ -1262,9 +1264,8 @@ void mali_gralloc_ion_unmap(private_handle_t *hnd)
 
 #ifdef GRALLOC_AML_EXTEND
 		uint64_t usage = hnd->producer_usage | hnd->consumer_usage;
-		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-			am_gralloc_is_omx_metadata_extend_usage(usage) ||
-			am_gralloc_is_omx_osd_extend_usage(usage)) {
+		if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage) ||
+			am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
 			break;
 		}
 		if (!hnd->ion_delay_alloc && munmap(base, size) < 0)
