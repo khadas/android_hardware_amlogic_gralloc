@@ -563,10 +563,10 @@ int ion_device::open_and_query_ion()
 
 #ifdef GRALLOC_AML_EXTEND
 
-#ifdef GRALLOC_USE_NEW_ION
-	use_legacy_ion = false;
-#else
+#ifdef BUILD_KERNEL_4_9
 	use_legacy_ion = true;
+#else
+	use_legacy_ion = false;
 #endif
 
 #else
