@@ -37,6 +37,7 @@ typedef int ion_user_handle_t;
 #define ION_FLAG_CACHED 1
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
 #define ION_FLAG_CACHED_NEEDS_SYNC 2
+#define ION_FLAG_EXTEND_MESON_HEAP (1 << 30)
 struct ion_allocation_data {
  size_t len;
  size_t align;

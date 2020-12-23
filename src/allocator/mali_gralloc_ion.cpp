@@ -275,6 +275,10 @@ int ion_device::alloc_from_ion_heap(uint64_t usage, size_t size, enum ion_heap_t
 		return -1;
 	}
 
+	if (heap_type == ION_HEAP_TYPE_CUSTOM ||
+		heap_type == ION_HEAP_TYPE_DMA)
+		flags |= ION_FLAG_EXTEND_MESON_HEAP;
+
 	bool system_heap_exist = false;
 
 	if (use_legacy_ion == false)
