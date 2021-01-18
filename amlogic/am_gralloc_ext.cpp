@@ -383,18 +383,21 @@ bool am_gralloc_is_omx_v4l_buffer(
 
 bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
     uint64_t usage = am_gralloc_get_usage(hnd);
+    bool ret = false;
 
 #if USE_BUFFER_USAGE
-    if (usage & GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER) {
+    if ((usage & GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER) &&
+            ((usage & GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET) !=
+             GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET)) {
 #else
     if (usage & GRALLOC_USAGE_AML_OMX_OVERLAY ||
         usage & GRALLOC_USAGE_AML_DMA_BUFFER ||
         usage & GRALLOC_USAGE_AML_VIDEO_OVERLAY) {
 #endif
-        return true;
+        ret = true;
     }
 
-    return false;
+    return ret;
 }
 
  int am_gralloc_get_omx_metadata_tunnel(
