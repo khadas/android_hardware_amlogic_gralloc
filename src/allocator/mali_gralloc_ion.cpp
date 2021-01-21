@@ -333,6 +333,11 @@ int ion_device::alloc_from_ion_heap(uint64_t usage, size_t size, enum ion_heap_t
 		{
 			return -1;
 		}
+		/* hw fb canot fallback to system heap.*/
+		if (usage & GRALLOC_USAGE_HW_FB) {
+			MALI_GRALLOC_LOGE("GRALLOC_USAGE_HW_FB Allocation failed on on dma heap. Cannot fallback.");
+			return -1;
+		}
 
 		/* Can't fall back to system heap if system heap was the heap that
 		 * already failed
