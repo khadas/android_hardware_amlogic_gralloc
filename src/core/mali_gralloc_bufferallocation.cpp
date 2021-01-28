@@ -493,8 +493,10 @@ static void calc_allocation_size(const int width,
 		              alloc_type,
 		              plane,
 		              has_cpu_usage);
-		MALI_GRALLOC_LOGV("Aligned w=%d, h=%d (in pixels)",
-		      plane_info[plane].alloc_width, plane_info[plane].alloc_height);
+#ifdef AML_GRALLOC_DEBUG
+		AML_GRALLOC_LOGI("Aligned plane[%d]-[w=%d, h=%d] (in pixels) format.npln:%d", plane,
+		      plane_info[plane].alloc_width, plane_info[plane].alloc_height, format.npln);
+#endif
 
 		/*
 		 * Calculate byte stride (per plane).
@@ -764,7 +766,6 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t * const bufDescripto
 	                     &bufDescriptor->pixel_stride,
 	                     &bufDescriptor->size,
 	                     bufDescriptor->plane_info);
-
 
 #if GRALLOC_USE_LEGACY_CALCS == 1
 

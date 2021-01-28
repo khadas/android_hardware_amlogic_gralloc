@@ -78,6 +78,7 @@ bool am_gralloc_is_video_overlay_extend_usage(
     return false;
 }
 
+/* usage for v4l2 decoder 1/4 buffer */
 bool am_gralloc_is_video_decoder_quarter_buffer_usage(
     uint64_t usage) {
 #if USE_BUFFER_USAGE
@@ -90,6 +91,7 @@ bool am_gralloc_is_video_decoder_quarter_buffer_usage(
     return false;
 }
 
+/* usage for v4l2 decoder 1/16 buffer */
 bool am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(
     uint64_t usage) {
 #if USE_BUFFER_USAGE
@@ -102,6 +104,7 @@ bool am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(
     return false;
 }
 
+/* usage for v4l2 decoder H264 surfaceview buffer */
 bool am_gralloc_is_video_decoder_full_buffer_usage(
     uint64_t usage) {
 #if USE_BUFFER_USAGE
@@ -114,6 +117,7 @@ bool am_gralloc_is_video_decoder_full_buffer_usage(
     return false;
 }
 
+/* usage for v4l2 decoder H264 surfacetexture buffer */
 bool am_gralloc_is_video_decoder_OSD_buffer_usage(
     uint64_t usage) {
 #if USE_BUFFER_USAGE

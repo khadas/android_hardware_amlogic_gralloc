@@ -272,6 +272,14 @@ int am_gralloc_get_stride_in_pixel(const native_handle_t * hnd) {
     return 0;
 }
 
+int am_gralloc_get_aligned_height(const native_handle_t * hnd) {
+    private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
+    if (buffer)
+        return buffer->plane_info[0].alloc_height;
+
+    return 0;
+}
+
 int am_gralloc_get_width(const native_handle_t * hnd) {
     private_handle_t const* buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
     if (buffer)
@@ -381,23 +389,13 @@ bool am_gralloc_is_omx_v4l_buffer(
     return false;
  }
 
-bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd __unused) {
-    uint64_t usage = am_gralloc_get_usage(hnd);
-    bool ret = false;
+bool am_gralloc_is_uvm_dma_buffer(const native_handle_t *hnd) {
+    private_handle_t * buffer = hnd ? private_handle_t::dynamicCast(hnd) : NULL;
 
-#if USE_BUFFER_USAGE
-    if ((usage & GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER) &&
-            ((usage & GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET) !=
-             GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET)) {
-#else
-    if (usage & GRALLOC_USAGE_AML_OMX_OVERLAY ||
-        usage & GRALLOC_USAGE_AML_DMA_BUFFER ||
-        usage & GRALLOC_USAGE_AML_VIDEO_OVERLAY) {
-#endif
-        ret = true;
-    }
+    if (buffer && (buffer->flags & private_handle_t::PRIV_FLAGS_UVM_BUFFER))
+        return true;
 
-    return ret;
+    return false;
 }
 
  int am_gralloc_get_omx_metadata_tunnel(

@@ -853,9 +853,12 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 #ifdef GRALLOC_AML_EXTEND
 	uint32_t delay_alloc = 0;
 	int uvm_fd = -1;
+	/* passed to UVM */
 	uint32_t uvm_flags = UVM_IMM_ALLOC;
 	int ret;
 	int buf_scalar = 1;
+	/* judge if it is allocated from UVM */
+	int uvm_buffer_flag = 0;
 #endif
 
 	ion_device *dev = ion_device::get();
@@ -899,7 +902,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 			am_gralloc_is_omx_metadata_extend_usage(usage) ||
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
-
+			uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
 			if (am_gralloc_is_omx_osd_extend_usage(usage) ||
 				am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
 				am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
@@ -985,7 +988,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			}
 
 			private_handle_t *hnd = new private_handle_t(
-			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag, bufDescriptor->size,
+			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | uvm_buffer_flag, bufDescriptor->size,
 			    bufDescriptor->consumer_usage, bufDescriptor->producer_usage, tmp_fd, bufDescriptor->hal_format,
 			    bufDescriptor->old_internal_format, bufDescriptor->alloc_format,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
@@ -1053,7 +1056,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 				am_gralloc_is_omx_metadata_extend_usage(usage) ||
 				am_gralloc_is_omx_osd_extend_usage(usage)) {
-
+				uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
 				if (am_gralloc_is_omx_osd_extend_usage(usage) ||
 					am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
 					am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
@@ -1111,7 +1114,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			}
 
 			private_handle_t *hnd = new private_handle_t(
-			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag, bufDescriptor->size,
+			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | uvm_buffer_flag, bufDescriptor->size,
 			    bufDescriptor->consumer_usage, bufDescriptor->producer_usage, shared_fd, bufDescriptor->hal_format,
 			    bufDescriptor->old_internal_format, bufDescriptor->alloc_format,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
