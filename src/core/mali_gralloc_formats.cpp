@@ -129,6 +129,12 @@ static uint16_t get_consumers(uint64_t usage)
 		{
 			consumers |= MALI_GRALLOC_CONSUMER_GPU;
 		}
+		#ifdef GRALLOC_AML_EXTEND
+		if (!consumers && (usage & (GRALLOC_USAGE_HW_COMPOSER)))
+		{
+			consumers |= MALI_GRALLOC_CONSUMER_DPU;
+		}
+		#endif
 	}
 
 	return consumers;
