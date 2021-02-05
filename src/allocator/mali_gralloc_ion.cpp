@@ -27,12 +27,12 @@
 #include <cutils/atomic.h>
 
 #ifdef GRALLOC_AML_EXTEND
-#if GRALLOC_USE_NEW_ION == 1
+#ifdef BUILD_KERNEL_4_9
+#include <ion/ion.h>
+#include "ion/ion_4.12.h"
+#else
 #include "ion/ion_5.4.h"
 #include "ion/ion_54.h"
-#else
-#include <ion/ion.h>
-#include <ion/ion_4.12.h>
 #endif
 #endif
 
@@ -1358,7 +1358,8 @@ enum ion_heap_type am_gralloc_pick_ion_heap(
 		goto out;
 	}
 
-	if (am_gralloc_is_omx_osd_extend_usage(usage))
+	if (am_gralloc_is_omx_osd_extend_usage(usage) ||
+		(usage & GRALLOC1_PRODUCER_USAGE_CAMERA))
 	{
 		ret = ION_HEAP_TYPE_CUSTOM;
 		goto out;
