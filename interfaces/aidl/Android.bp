@@ -19,6 +19,7 @@ aidl_interface {
     name: "arm.graphics",
     host_supported: true,
     vendor_available: true,
+    system_ext_specific: true,
     srcs: [
         "arm/graphics/*.aidl",
     ],
