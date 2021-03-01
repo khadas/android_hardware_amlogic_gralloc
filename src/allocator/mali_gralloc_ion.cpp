@@ -70,6 +70,10 @@ ion_heap_type am_gralloc_pick_ion_heap(
 	buffer_descriptor_t *bufDescriptor, uint64_t usage);
 void am_gralloc_set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
 	unsigned int *priv_heap_flag, unsigned int *ion_flags);
+
+#define V4L2_DECODER_BUFFER_MAX_WIDTH       4096
+#define V4L2_DECODER_BUFFER_MAX_HEIGHT      2304
+
 #endif
 //meson graphics changes end
 
@@ -859,6 +863,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 	int buf_scalar = 1;
 	/* judge if it is allocated from UVM */
 	int uvm_buffer_flag = 0;
+	int v4l2_dec_max_buf_size =
+			(V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT) * 3 / 2;
 #endif
 
 	ion_device *dev = ion_device::get();
@@ -902,7 +908,9 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 			am_gralloc_is_omx_metadata_extend_usage(usage) ||
 			am_gralloc_is_omx_osd_extend_usage(usage)) {
+
 			uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
+
 			if (am_gralloc_is_omx_osd_extend_usage(usage) ||
 				am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
 				am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
@@ -927,7 +935,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.height = max_bufDescriptor->height,
 				.align = 0,
 				.flags = uvm_flags,
-				.scalar = buf_scalar
+				.scalar = buf_scalar,
+				.scaled_buf_size = v4l2_dec_max_buf_size / (buf_scalar * buf_scalar)
 			};
 			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
 			if (ret < 0) {
@@ -1056,7 +1065,9 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
 				am_gralloc_is_omx_metadata_extend_usage(usage) ||
 				am_gralloc_is_omx_osd_extend_usage(usage)) {
+
 				uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
+
 				if (am_gralloc_is_omx_osd_extend_usage(usage) ||
 					am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
 					am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
@@ -1081,7 +1092,8 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 					.height = bufDescriptor->height,
 					.align = 0,
 					.flags = uvm_flags,
-					.scalar = buf_scalar
+					.scalar = buf_scalar,
+					.scaled_buf_size = v4l2_dec_max_buf_size / (buf_scalar * buf_scalar)
 				};
 
 				ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);

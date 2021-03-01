@@ -43,6 +43,7 @@ struct uvm_alloc_data {
 	uint32_t width;
 	uint32_t height;
 	int scalar;
+	int scaled_buf_size;
 };
 
 #define UVM_IMM_ALLOC        (1 << 0)
