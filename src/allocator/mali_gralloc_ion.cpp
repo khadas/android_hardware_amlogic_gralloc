@@ -222,6 +222,24 @@ private:
 	int open_and_query_ion();
 };
 
+#ifdef GRALLOC_AML_EXTEND
+	//workaround for unsupported 4k video play on some platforms
+#include <cutils/properties.h>
+static int am_gralloc_exec_omx_policy(int size, int scalar) {
+	char prop[PROPERTY_VALUE_MAX];
+
+	size /= scalar * scalar;
+	if (property_get("ro.vendor.platform.support.4k", prop, NULL) > 0)
+	{
+		if (strstr(prop, "false"))
+		{
+			size = (GRALLOC_ALIGN(1920/scalar, 64) * GRALLOC_ALIGN(1080/scalar, 64)) * 3 / 2;
+		}
+	}
+	return size;
+}
+#endif
+
 static void set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
                           unsigned int *priv_heap_flag, unsigned int *ion_flags)
 {
@@ -927,6 +945,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			if (usage & GRALLOC_USAGE_PROTECTED) {
 				uvm_flags |= UVM_USAGE_PROTECTED;
 			}
+#ifdef GRALLOC_AML_EXTEND
+			//workaround for unsupported 4k video play on some platforms
+			v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
+#endif
 
 			struct uvm_alloc_data uad = {
 				.size = (int)max_bufDescriptor->size,
@@ -936,7 +958,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				.align = 0,
 				.flags = uvm_flags,
 				.scalar = buf_scalar,
-				.scaled_buf_size = v4l2_dec_max_buf_size / (buf_scalar * buf_scalar)
+				.scaled_buf_size = v4l2_dec_max_buf_size
 			};
 			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
 			if (ret < 0) {
@@ -1084,6 +1106,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				if (usage & GRALLOC_USAGE_PROTECTED) {
 					uvm_flags |= UVM_USAGE_PROTECTED;
 			}
+#ifdef GRALLOC_AML_EXTEND
+				//workaround for unsupported 4k video play on some platforms
+				v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
+#endif
 
 				struct uvm_alloc_data uad = {
 					.size = (int)bufDescriptor->size,
@@ -1093,7 +1119,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 					.align = 0,
 					.flags = uvm_flags,
 					.scalar = buf_scalar,
-					.scaled_buf_size = v4l2_dec_max_buf_size / (buf_scalar * buf_scalar)
+					.scaled_buf_size = v4l2_dec_max_buf_size
 				};
 
 				ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
