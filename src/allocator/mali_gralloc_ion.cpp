@@ -86,7 +86,8 @@ void am_gralloc_set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
 #define HEAP_MASK_FROM_TYPE(type) (1 << type)
 
 static const enum ion_heap_type ION_HEAP_TYPE_INVALID = ((enum ion_heap_type)~0);
-static const enum ion_heap_type ION_HEAP_TYPE_SECURE = (enum ion_heap_type)(((unsigned int)ION_HEAP_TYPE_CUSTOM) + 1);
+static const enum ion_heap_type ION_HEAP_TYPE_SECURE = (enum ion_heap_type)(((unsigned int)ION_HEAP_TYPE_CUSTOM) + 2);
+static const enum ion_heap_type ION_HEAP_TYPE_FB = (enum ion_heap_type)(((unsigned int)ION_HEAP_TYPE_CUSTOM) + 1);
 
 #if defined(ION_HEAP_SECURE_MASK)
 #if (HEAP_MASK_FROM_TYPE(ION_HEAP_TYPE_SECURE) != ION_HEAP_SECURE_MASK)
@@ -300,7 +301,8 @@ int ion_device::alloc_from_ion_heap(uint64_t usage, size_t size, enum ion_heap_t
 	}
 
 	if (heap_type == ION_HEAP_TYPE_CUSTOM ||
-		heap_type == ION_HEAP_TYPE_DMA)
+		heap_type == ION_HEAP_TYPE_DMA ||
+		heap_type == ION_HEAP_TYPE_FB)
 		flags |= ION_FLAG_EXTEND_MESON_HEAP;
 
 	bool system_heap_exist = false;
@@ -315,7 +317,10 @@ int ion_device::alloc_from_ion_heap(uint64_t usage, size_t size, enum ion_heap_t
 		 */
 		do
 		{
-			if (heap_type == heap_info[i].type)
+			if (((heap_type == heap_info[i].type) &&
+				strcmp(heap_info[i].name, "ion-fb")) ||
+				(heap_type == ION_HEAP_TYPE_FB &&
+				!strcmp(heap_info[i].name, "ion-fb")))
 			{
 				is_heap_matched = true;
 				ret = ion_alloc_fd(ion_client, size, 0,
@@ -1401,7 +1406,7 @@ enum ion_heap_type am_gralloc_pick_ion_heap(
 
 	if (usage & GRALLOC_USAGE_HW_FB)
 	{
-		ret = ION_HEAP_TYPE_DMA;
+		ret = ION_HEAP_TYPE_FB;
 		goto out;
 	}
 
@@ -1462,6 +1467,10 @@ void am_gralloc_set_ion_flags(ion_heap_type heap_type, uint64_t usage,
 			*priv_heap_flag |= coherent_buffer_flag;
 		}
 		else if (heap_type == ION_HEAP_TYPE_CUSTOM)
+		{
+			*priv_heap_flag |= coherent_buffer_flag;
+		}
+		else if (heap_type == ION_HEAP_TYPE_FB)
 		{
 			*priv_heap_flag |= coherent_buffer_flag;
 		}
