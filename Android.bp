@@ -151,8 +151,7 @@ arm_gralloc_cc_defaults {
 
 cc_library_shared {
     name: "libamgralloc_ext@2",
-    vendor_available: true,
-    system_ext_specific: true,
+    vendor: true,
     cflags: [
         "-DUSE_BUFFER_USAGE=1",
         "-DGRALLOC_AML_EXTEND",

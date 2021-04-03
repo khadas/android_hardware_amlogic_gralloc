@@ -14,7 +14,8 @@
 
 cc_library_shared {
     name: "libamgralloc_ext",
-    proprietary: true,
+    vendor_available: true,
+    system_ext_specific: true,
     shared_libs: [
         "liblog",
         "libcutils",
