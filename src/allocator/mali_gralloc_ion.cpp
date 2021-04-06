@@ -73,6 +73,8 @@ void am_gralloc_set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
 
 #define V4L2_DECODER_BUFFER_MAX_WIDTH       4096
 #define V4L2_DECODER_BUFFER_MAX_HEIGHT      2304
+#define V4L2_DECODER_BUFFER_8k_MAX_WIDTH       8192
+#define V4L2_DECODER_BUFFER_8k_MAX_HEIGHT      4352
 
 #endif
 //meson graphics changes end
@@ -945,6 +947,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			if (usage & GRALLOC_USAGE_PROTECTED) {
 				uvm_flags |= UVM_USAGE_PROTECTED;
 			}
+			if ((max_bufDescriptor->width * max_bufDescriptor->height) > (V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT)) {
+				v4l2_dec_max_buf_size = V4L2_DECODER_BUFFER_8k_MAX_WIDTH * V4L2_DECODER_BUFFER_8k_MAX_HEIGHT * 3 / 2;
+			}
+
 #ifdef GRALLOC_AML_EXTEND
 			//workaround for unsupported 4k video play on some platforms
 			v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
@@ -1105,7 +1111,10 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 				if (usage & GRALLOC_USAGE_PROTECTED) {
 					uvm_flags |= UVM_USAGE_PROTECTED;
-			}
+				}
+				if ((bufDescriptor->width * bufDescriptor->height) > (V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT)) {
+					v4l2_dec_max_buf_size = V4L2_DECODER_BUFFER_8k_MAX_WIDTH * V4L2_DECODER_BUFFER_8k_MAX_HEIGHT * 3 / 2;
+				}
 #ifdef GRALLOC_AML_EXTEND
 				//workaround for unsupported 4k video play on some platforms
 				v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
