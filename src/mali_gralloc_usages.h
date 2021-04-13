@@ -309,6 +309,7 @@ static const uint64_t VALID_USAGE =
     GRALLOC_USAGE_PRIVATE_13 |         /* 1U << 54 */
     GRALLOC_USAGE_PRIVATE_0 |          /* 1U << 28 */
     GRALLOC_USAGE_PRIVATE_1 |          /* 1U << 29 */
+    GRALLOC_USAGE_PRIVATE_2 |          /* 1U << 30 */
     0;
 
 #endif /*MALI_GRALLOC_USAGES_H_*/
