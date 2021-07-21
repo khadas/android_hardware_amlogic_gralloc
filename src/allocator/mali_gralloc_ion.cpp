@@ -296,8 +296,11 @@ int ion_device::alloc_from_ion_heap(uint64_t usage, size_t size, enum ion_heap_t
 
 	if (heap_type == ION_HEAP_TYPE_CUSTOM ||
 		heap_type == ION_HEAP_TYPE_DMA ||
-		heap_type == ION_HEAP_TYPE_FB)
+		heap_type == ION_HEAP_TYPE_FB ||
+		heap_type == ION_HEAP_TYPE_SECURE)
 		flags |= ION_FLAG_EXTEND_MESON_HEAP;
+	if (heap_type == ION_HEAP_TYPE_SECURE)
+		flags |= ION_FLAG_EXTEND_MESON_HEAP_SECURE;
 
 	bool system_heap_exist = false;
 
@@ -632,7 +635,7 @@ int ion_device::open_and_query_ion()
 						return -1;
 					}
 
-					if (strcmp(heap->name, "ion_protected_heap") == 0)
+					if (strcmp(heap->name, "secure_ion") == 0)
 					{
 						heap->type = ION_HEAP_TYPE_SECURE;
 						secure_heap_exists = true;
@@ -864,7 +867,6 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
                               uint32_t numDescriptors, buffer_handle_t *pHandle,
                               bool *shared_backend)
 {
-	static int support_protected = 1;
 	unsigned int priv_heap_flag = 0;
 	enum ion_heap_type heap_type;
 	unsigned char *cpu_ptr = NULL;
@@ -1430,6 +1432,12 @@ enum ion_heap_type am_gralloc_pick_ion_heap(
 	if (am_gralloc_is_omx_metadata_extend_usage(usage))
 	{
 		ret = ION_HEAP_TYPE_SYSTEM;
+		goto out;
+	}
+
+	if (am_gralloc_is_secure_extend_usage(usage))
+	{
+		ret = ION_HEAP_TYPE_SECURE;
 		goto out;
 	}
 

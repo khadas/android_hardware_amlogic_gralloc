@@ -160,7 +160,8 @@ int am_gralloc_get_video_overlay_extend_flag() {
 }
 
 int am_gralloc_get_secure_extend_flag() {
-    return private_handle_t::PRIV_FLAGS_SECURE_PROTECTED;
+    return private_handle_t::PRIV_FLAGS_SECURE_PROTECTED
+        | private_handle_t::PRIV_FLAGS_CONTINUOUS_BUF;
 }
 
 bool need_do_width_height_align(uint64_t usage,
