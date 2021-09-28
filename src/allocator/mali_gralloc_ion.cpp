@@ -66,10 +66,22 @@ static std::map<int, int> imported_ion_client;
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 #include <am_gralloc_internal.h>
+#include <cutils/properties.h>
+
 ion_heap_type am_gralloc_pick_ion_heap(
-	buffer_descriptor_t *bufDescriptor, uint64_t usage);
-void am_gralloc_set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
-	unsigned int *priv_heap_flag, unsigned int *ion_flags);
+					buffer_descriptor_t *bufDescriptor,
+					uint64_t usage);
+void am_gralloc_set_ion_flags(
+					enum ion_heap_type heap_type,
+					uint64_t usage,
+					unsigned int *priv_heap_flag,
+					unsigned int *ion_flags);
+static int am_gralloc_exec_omx_policy(
+					int size, int scalar);
+static int am_gralloc_exec_uvm_policy(
+					buffer_descriptor_t *max_bufDescriptor,
+					uint64_t usage,
+					struct uvm_exec_data *agu);
 
 #define V4L2_DECODER_BUFFER_MAX_WIDTH       4096
 #define V4L2_DECODER_BUFFER_MAX_HEIGHT      2304
@@ -224,24 +236,6 @@ private:
 	 */
 	int open_and_query_ion();
 };
-
-#ifdef GRALLOC_AML_EXTEND
-	//workaround for unsupported 4k video play on some platforms
-#include <cutils/properties.h>
-static int am_gralloc_exec_omx_policy(int size, int scalar) {
-	char prop[PROPERTY_VALUE_MAX];
-
-	size /= scalar * scalar;
-	if (property_get("ro.vendor.platform.support.4k", prop, NULL) > 0)
-	{
-		if (strstr(prop, "false"))
-		{
-			size = (GRALLOC_ALIGN(1920/scalar, 64) * GRALLOC_ALIGN(1080/scalar, 64)) * 3 / 2;
-		}
-	}
-	return size;
-}
-#endif
 
 static void set_ion_flags(enum ion_heap_type heap_type, uint64_t usage,
                           unsigned int *priv_heap_flag, unsigned int *ion_flags)
@@ -880,25 +874,17 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 	unsigned int ion_flags = 0;
 	int min_pgsz = 0;
 #ifdef GRALLOC_AML_EXTEND
-	uint32_t delay_alloc = 0;
-	int uvm_fd = -1;
-	/* passed to UVM */
-	uint32_t uvm_flags = UVM_IMM_ALLOC;
-	int ret;
-	int buf_scalar = 1;
-	/* judge if it is allocated from UVM */
-	int uvm_buffer_flag = 0;
-	int v4l2_dec_max_buf_size =
-			(V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT) * 3 / 2;
+	struct uvm_exec_data *agu = (struct uvm_exec_data *)malloc(sizeof(uvm_exec_data));
 #endif
 
 	ion_device *dev = ion_device::get();
-#ifdef GRALLOC_AML_EXTEND
-    uvm_fd = ion_device::get_uvm();
-#endif
 
 	if (!dev)
 	{
+#ifdef GRALLOC_AML_EXTEND
+		MALI_GRALLOC_LOGE("Failed to get ion_device!");
+		free(agu);
+#endif
 		return -1;
 	}
 
@@ -914,74 +900,31 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-        heap_type = am_gralloc_pick_ion_heap(max_bufDescriptor, usage);
+		heap_type = am_gralloc_pick_ion_heap(max_bufDescriptor, usage);
 #else
-        heap_type = dev->pick_ion_heap(usage);
+		heap_type = dev->pick_ion_heap(usage);
 #endif
 //meson graphics changes end
 
 		if (heap_type == ION_HEAP_TYPE_INVALID)
 		{
 			MALI_GRALLOC_LOGE("Failed to find an appropriate ion heap");
+			free(agu);
 			return -1;
 		}
 
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
-        am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
+		am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
+		shared_fd = am_gralloc_exec_uvm_policy(max_bufDescriptor, usage, agu);
 
-		if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-			am_gralloc_is_omx_metadata_extend_usage(usage) ||
-			am_gralloc_is_omx_osd_extend_usage(usage)) {
-
-			uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
-
-			if (am_gralloc_is_omx_osd_extend_usage(usage) ||
-				am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
-				am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
-				buf_scalar = 1;
-			} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
-				buf_scalar = 2;
-			} else if (am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
-				buf_scalar = 4;
-			} else {
-				uvm_flags = UVM_DELAY_ALLOC;
-				delay_alloc = 1;
-			}
-
-			if (usage & GRALLOC_USAGE_PROTECTED) {
-				uvm_flags |= UVM_USAGE_PROTECTED;
-			}
-			if ((max_bufDescriptor->width * max_bufDescriptor->height) > (V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT)) {
-				v4l2_dec_max_buf_size = V4L2_DECODER_BUFFER_8k_MAX_WIDTH * V4L2_DECODER_BUFFER_8k_MAX_HEIGHT * 3 / 2;
-			}
-
-#ifdef GRALLOC_AML_EXTEND
-			//workaround for unsupported 4k video play on some platforms
-			v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
+#ifdef AML_GRALLOC_DEBUG
+		AML_GRALLOC_LOGI("shared_fd: ( %d ) agu->delay_alloc:%d agu->uvm_flag:%d",
+						shared_fd, agu->delay_alloc, agu->uvm_flag);
 #endif
-
-			struct uvm_alloc_data uad = {
-				.size = (int)max_bufDescriptor->size,
-				.byte_stride = max_bufDescriptor->pixel_stride,
-				.width = max_bufDescriptor->width,
-				.height = max_bufDescriptor->height,
-				.align = 0,
-				.flags = uvm_flags,
-				.scalar = buf_scalar,
-				.scaled_buf_size = v4l2_dec_max_buf_size
-			};
-			ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
-			if (ret < 0) {
-				MALI_GRALLOC_LOGE("%s, ioctl::UVM_IOC_ALLOC failed uvm_fd=%d",
-					__func__, uvm_fd);
-				return ret;
-			}
-			ALOGE("ioctl UVM_IOC_ALLOC fd sharefd: %d\n", uad.fd);
-			shared_fd = uad.fd;
-		} else {
+		if (shared_fd < 0) {
 			shared_fd = dev->alloc_from_ion_heap(usage, max_bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
-			delay_alloc = 0;
+			agu->delay_alloc = 0;
 		}
 		/*update private heap flag*/
 		am_gralloc_set_ion_flags(heap_type, usage, &priv_heap_flag, NULL);
@@ -995,6 +938,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		if (shared_fd < 0)
 		{
 			MALI_GRALLOC_LOGE("ion_alloc failed form client: ( %d )", dev->client());
+			free(agu);
 			return -1;
 		}
 
@@ -1021,6 +965,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 					/* Need to free already allocated memory. */
 					mali_gralloc_ion_free_internal(pHandle, numDescriptors);
+					free(agu);
 					return -1;
 				}
 			}
@@ -1030,7 +975,7 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			}
 
 			private_handle_t *hnd = new private_handle_t(
-			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | uvm_buffer_flag, bufDescriptor->size,
+			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | agu->uvm_buffer_flag, bufDescriptor->size,
 			    bufDescriptor->consumer_usage, bufDescriptor->producer_usage, tmp_fd, bufDescriptor->hal_format,
 			    bufDescriptor->old_internal_format, bufDescriptor->alloc_format,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
@@ -1057,15 +1002,16 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 				/* Free the resources allocated for the previous handles */
 				mali_gralloc_ion_free_internal(pHandle, numDescriptors);
+				free(agu);
 				return -1;
 			}
 
 #ifdef GRALLOC_AML_EXTEND
-			hnd->ion_delay_alloc = delay_alloc;
+			hnd->ion_delay_alloc = agu->delay_alloc;
 			hnd->am_extend_fd = ::dup(hnd->share_fd);
 			hnd->am_extend_type = 0;
+			free(agu);
 #endif
-
 			pHandle[i] = hnd;
 		}
 	}
@@ -1088,65 +1034,22 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 			{
 				MALI_GRALLOC_LOGE("Failed to find an appropriate ion heap");
 				mali_gralloc_ion_free_internal(pHandle, numDescriptors);
+				free(agu);
 				return -1;
 			}
 
 //meson graphics changes start
 #ifdef GRALLOC_AML_EXTEND
 			am_gralloc_set_ion_flags(heap_type, usage, NULL, &ion_flags);
+			shared_fd = am_gralloc_exec_uvm_policy(bufDescriptor, usage, agu);
 
-			if (am_gralloc_is_video_overlay_extend_usage(usage) ||
-				am_gralloc_is_omx_metadata_extend_usage(usage) ||
-				am_gralloc_is_omx_osd_extend_usage(usage)) {
-
-				uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
-
-				if (am_gralloc_is_omx_osd_extend_usage(usage) ||
-					am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
-					am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
-					buf_scalar = 1;
-				} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
-					buf_scalar = 2;
-				} else if (am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
-					buf_scalar = 4;
-				} else {
-					uvm_flags = UVM_DELAY_ALLOC;
-					delay_alloc = 1;
-				}
-
-				if (usage & GRALLOC_USAGE_PROTECTED) {
-					uvm_flags |= UVM_USAGE_PROTECTED;
-				}
-				if ((bufDescriptor->width * bufDescriptor->height) > (V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT)) {
-					v4l2_dec_max_buf_size = V4L2_DECODER_BUFFER_8k_MAX_WIDTH * V4L2_DECODER_BUFFER_8k_MAX_HEIGHT * 3 / 2;
-				}
-#ifdef GRALLOC_AML_EXTEND
-				//workaround for unsupported 4k video play on some platforms
-				v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
+#ifdef AML_GRALLOC_DEBUG
+			AML_GRALLOC_LOGI("shared_fd: ( %d ) agu->delay_alloc:%d agu->uvm_flag:%d",
+							shared_fd, agu->delay_alloc, agu->uvm_flag);
 #endif
-
-				struct uvm_alloc_data uad = {
-					.size = (int)bufDescriptor->size,
-					.byte_stride = bufDescriptor->pixel_stride,
-					.width = bufDescriptor->width,
-					.height = bufDescriptor->height,
-					.align = 0,
-					.flags = uvm_flags,
-					.scalar = buf_scalar,
-					.scaled_buf_size = v4l2_dec_max_buf_size
-				};
-
-				ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
-				if (ret < 0) {
-					MALI_GRALLOC_LOGE("%s, ioctl::UVM_IOC_ALLOC failed uvm_fd=%d",
-						__func__, uvm_fd);
-					return ret;
-				}
-
-				shared_fd = uad.fd;
-			} else {
+			if (shared_fd < 0) {
 				shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
-				delay_alloc = 0;
+				agu->delay_alloc = 0;
 			}
 			am_gralloc_set_ion_flags(heap_type, usage, &priv_heap_flag, NULL);
 #else
@@ -1161,12 +1064,12 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 
 				/* need to free already allocated memory. not just this one */
 				mali_gralloc_ion_free_internal(pHandle, numDescriptors);
-
+				free(agu);
 				return -1;
 			}
 
 			private_handle_t *hnd = new private_handle_t(
-			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | uvm_buffer_flag, bufDescriptor->size,
+			    private_handle_t::PRIV_FLAGS_USES_ION | priv_heap_flag | agu->uvm_buffer_flag, bufDescriptor->size,
 			    bufDescriptor->consumer_usage, bufDescriptor->producer_usage, shared_fd, bufDescriptor->hal_format,
 			    bufDescriptor->old_internal_format, bufDescriptor->alloc_format,
 			    bufDescriptor->width, bufDescriptor->height, bufDescriptor->pixel_stride,
@@ -1184,12 +1087,14 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 				/* Close the obtained shared file descriptor for the current handle */
 				close(shared_fd);
 				mali_gralloc_ion_free_internal(pHandle, numDescriptors);
+				free(agu);
 				return -1;
 			}
 #ifdef GRALLOC_AML_EXTEND
-			hnd->ion_delay_alloc = delay_alloc;
+			hnd->ion_delay_alloc = agu->delay_alloc;
 			hnd->am_extend_fd = ::dup(hnd->share_fd);
 			hnd->am_extend_type = 0;
+			free(agu);
 #endif
 			pHandle[i] = hnd;
 		}
@@ -1397,6 +1302,100 @@ bool is_android_yuv_format(int req_format)
 	}
 
 	return rval;
+}
+
+static int am_gralloc_exec_omx_policy(int size, int scalar) {
+	char prop[PROPERTY_VALUE_MAX];
+	size /= scalar * scalar;
+	/*
+	 * workaround for unsupported 4k video play on some platforms
+	 */
+	if (property_get("ro.vendor.platform.support.4k", prop, NULL) > 0)
+	{
+		if (strstr(prop, "false"))
+		{
+			size = (GRALLOC_ALIGN(1920/scalar, 64) * GRALLOC_ALIGN(1080/scalar, 64)) * 3 / 2;
+		}
+	}
+	return size;
+}
+
+static int am_gralloc_exec_uvm_policy(
+					buffer_descriptor_t *max_bufDescriptor,
+					uint64_t usage,
+					struct uvm_exec_data *agu) {
+	int uvm_fd = -1;
+	int ret = -1;
+	int buf_scalar = 1;
+	int aligned_bit = 1;
+	int v4l2_dec_max_buf_size =
+		(V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT) * 3 / 2;
+
+	uvm_fd = ion_device::get_uvm();
+	if (uvm_fd < 0) {
+		MALI_GRALLOC_LOGE("%s, get_uvm failed uvm_fd=%d",
+				__func__, uvm_fd);
+		return ret;
+	}
+
+	agu->delay_alloc = 0;
+	agu->uvm_flag = UVM_IMM_ALLOC;
+	agu->uvm_buffer_flag = 0;
+
+	if (am_gralloc_is_video_overlay_extend_usage(usage) ||
+		am_gralloc_is_omx_metadata_extend_usage(usage) ||
+		am_gralloc_is_omx_osd_extend_usage(usage)) {
+
+		agu->uvm_buffer_flag |= private_handle_t::PRIV_FLAGS_UVM_BUFFER;
+
+		if (am_gralloc_is_omx_osd_extend_usage(usage) ||
+			am_gralloc_is_video_decoder_full_buffer_usage(usage) ||
+			am_gralloc_is_video_decoder_OSD_buffer_usage(usage)) {
+			buf_scalar = 1;
+		} else if (am_gralloc_is_video_decoder_quarter_buffer_usage(usage)) {
+			buf_scalar = 2;
+		} else if (am_gralloc_is_video_decoder_one_sixteenth_buffer_usage(usage)) {
+			buf_scalar = 4;
+		} else {
+			agu->uvm_flag = UVM_DELAY_ALLOC;
+			agu->delay_alloc = 1;
+		}
+
+		if (usage & GRALLOC_USAGE_PROTECTED)
+			agu->uvm_flag |= UVM_USAGE_PROTECTED;
+
+		if (am_gralloc_is_video_decoder_OSD_buffer_usage(usage))
+			agu->uvm_flag |= UVM_SKIP_REALLOC;
+
+		if (need_do_width_height_align(usage, max_bufDescriptor->width, max_bufDescriptor->height))
+			aligned_bit = 64;
+
+		if ((max_bufDescriptor->width * max_bufDescriptor->height) > (V4L2_DECODER_BUFFER_MAX_WIDTH * V4L2_DECODER_BUFFER_MAX_HEIGHT)) {
+				v4l2_dec_max_buf_size = V4L2_DECODER_BUFFER_8k_MAX_WIDTH * V4L2_DECODER_BUFFER_8k_MAX_HEIGHT * 3 / 2;
+		}
+
+		v4l2_dec_max_buf_size = am_gralloc_exec_omx_policy(v4l2_dec_max_buf_size, buf_scalar);
+
+		struct uvm_alloc_data uad = {
+			.size = (int)max_bufDescriptor->size,
+			.byte_stride = max_bufDescriptor->pixel_stride,
+			.width = max_bufDescriptor->width,
+			.height = max_bufDescriptor->height,
+			.align = aligned_bit,
+			.flags = agu->uvm_flag,
+			.scalar = buf_scalar,
+			.scaled_buf_size = v4l2_dec_max_buf_size
+		};
+		ret = ioctl(uvm_fd, UVM_IOC_ALLOC, &uad);
+		if (ret < 0) {
+			MALI_GRALLOC_LOGE("%s, ioctl::UVM_IOC_ALLOC failed uvm_fd=%d",
+				__func__, uvm_fd);
+			return ret;
+		}
+
+		return uad.fd;
+	}
+	return ret;
 }
 
 enum ion_heap_type am_gralloc_pick_ion_heap(

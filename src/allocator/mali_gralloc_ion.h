@@ -45,11 +45,19 @@ struct uvm_alloc_data {
 	int scalar;
 	int scaled_buf_size;
 };
+struct uvm_exec_data {
+	uint32_t delay_alloc;
+	uint32_t uvm_flag;
+/* judge if it is allocated from UVM */
+	uint32_t uvm_buffer_flag;
+};
 
 #define UVM_IMM_ALLOC        (1 << 0)
 #define UVM_DELAY_ALLOC      (1 << 1)
 #define UVM_FAKE_ALLOC       (1 << 2)
 #define UVM_USAGE_PROTECTED  (1 << 3)
+#define UVM_SKIP_REALLOC     (1 << 4)
+
 #define UVM_IOC_MAGIC 'U'
 #define UVM_IOC_ALLOC _IOWR(UVM_IOC_MAGIC, 0, \
 				struct uvm_alloc_data)
