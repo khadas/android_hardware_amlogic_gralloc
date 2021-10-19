@@ -53,6 +53,11 @@ endif
 MESON_GR_USE_BUFFER_USAGE := $(shell expr $(PLATFORM_SDK_VERSION) \> 25)
 endif
 
+ifeq ($(GPU_ARCH),utgard)
+MESON_GPU_ARCH=utgard
+else
+MESON_GPU_ARCH=bifrost
+endif
 
 # VPU version we support
 MALI_VIDEO_VERSION?=0
@@ -170,7 +175,8 @@ SOONG_CONFIG_arm_gralloc := \
 	gralloc_use_ion_dmabuf_sync \
 	gralloc_camera_write_raw16 \
 	mali_gralloc_api_tests \
-	gralloc_api_version
+	gralloc_api_version \
+	meson_gpu_arch
 
 SOONG_CONFIG_arm_gralloc_mali_gpu_support_afbc_basic := $(MALI_GPU_SUPPORT_AFBC_BASIC)
 SOONG_CONFIG_arm_gralloc_mali_gpu_support_afbc_splitblk := $(MALI_GPU_SUPPORT_AFBC_SPLITBLK)
@@ -195,3 +201,4 @@ SOONG_CONFIG_arm_gralloc_gralloc_use_ion_dmabuf_sync := $(GRALLOC_USE_ION_DMABUF
 SOONG_CONFIG_arm_gralloc_gralloc_camera_write_raw16 := $(GRALLOC_CAMERA_WRITE_RAW16)
 SOONG_CONFIG_arm_gralloc_mali_gralloc_api_tests := $(MALI_GRALLOC_API_TESTS)
 SOONG_CONFIG_arm_gralloc_gralloc_api_version := $(GRALLOC_API_VERSION)
+SOONG_CONFIG_arm_gralloc_meson_gpu_arch := $(MESON_GPU_ARCH)

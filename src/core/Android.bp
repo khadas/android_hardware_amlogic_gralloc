@@ -15,7 +15,27 @@
  * limitations under the License.
  */
 
-cc_defaults {
+soong_config_module_type {
+	name: "core_cc_defaults",
+	module_type: "cc_defaults",
+	config_namespace: "arm_gralloc",
+	variables: [
+		"meson_gpu_arch",
+	],
+	properties: [
+		"srcs",
+	],
+}
+
+soong_config_string_variable {
+    name: "meson_gpu_arch",
+    values: [
+        "bifrost",
+        "utgard",
+    ],
+}
+
+core_cc_defaults {
 	name: "arm_gralloc_core_defaults",
 	defaults: [
 		"arm_gralloc_defaults",
@@ -33,8 +53,23 @@ cc_defaults {
 		"mali_gralloc_formats.cpp",
 		"mali_gralloc_reference.cpp",
 		"mali_gralloc_debug.cpp",
-		"format_info.cpp",
 	],
+
+	soong_config_variables: {
+		meson_gpu_arch: {
+			bifrost: {
+				srcs: [
+					"format_info.cpp",
+				],
+			},
+			utgard: {
+				srcs: [
+					"format_info_utgard.cpp",
+				],
+			},
+		},
+	},
+
 	include_dirs: [
 		"hardware/amlogic/gralloc/amlogic",
 	],
