@@ -923,6 +923,11 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 						shared_fd, agu->delay_alloc, agu->uvm_flag);
 #endif
 		if (shared_fd < 0) {
+			if (agu->uvm_buffer_flag) {
+				MALI_GRALLOC_LOGE("Failed to allocate from codec_mm!");
+				free(agu);
+				return -1;
+			}
 			shared_fd = dev->alloc_from_ion_heap(usage, max_bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
 			agu->delay_alloc = 0;
 		}
@@ -1048,6 +1053,12 @@ int mali_gralloc_ion_allocate(const gralloc_buffer_descriptor_t *descriptors,
 							shared_fd, agu->delay_alloc, agu->uvm_flag);
 #endif
 			if (shared_fd < 0) {
+				if (agu->uvm_buffer_flag) {
+					MALI_GRALLOC_LOGE("Failed to allocate from codec_mm!");
+					mali_gralloc_ion_free_internal(pHandle, numDescriptors);
+					free(agu);
+					return -1;
+				}
 				shared_fd = dev->alloc_from_ion_heap(usage, bufDescriptor->size, &heap_type, ion_flags, &min_pgsz);
 				agu->delay_alloc = 0;
 			}
