@@ -23,6 +23,7 @@
 #define ION_NUM_HEAP_IDS (sizeof(unsigned int) * 8)
 
 #define ION_FLAG_EXTEND_MESON_HEAP (1 << 30)
+#define ION_FLAG_EXTEND_MESON_HEAP_SECURE (1 << 29)
 
 /**
  * DOC: Ion Userspace API
