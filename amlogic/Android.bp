@@ -37,7 +37,10 @@ cc_library_shared {
         "system/memory/libion/kernel-headers",
         "hardware/amlogic/gralloc/src",
     ],
-    srcs: ["am_gralloc_ext.cpp"],
+    srcs: [
+        "am_gralloc_ext.cpp",
+        "am_gralloc_uvm_ext.cpp",
+    ],
     export_include_dirs: ["."],
 }
 
@@ -63,7 +66,10 @@ cc_library_static {
         "hardware/libhardware/include",
         "hardware/amlogic/gralloc/src",
     ],
-    srcs: ["am_gralloc_ext.cpp"],
+    srcs: [
+        "am_gralloc_ext.cpp",
+        "am_gralloc_uvm_ext.cpp",
+    ],
 }
 
 // Interal static lib for amlogic extend gralloc

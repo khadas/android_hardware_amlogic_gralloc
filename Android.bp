@@ -161,7 +161,8 @@ cc_library_shared {
         "hardware/amlogic/gralloc/src",
     ],
     srcs: [
-        "amlogic/am_gralloc_ext.cpp"
+        "amlogic/am_gralloc_ext.cpp",
+        "amlogic/am_gralloc_uvm_ext.cpp",
     ],
     shared_libs: [
         "liblog",
@@ -192,7 +193,8 @@ cc_library_static {
        "system/memory/libion/kernel-headers",
     ],
     srcs: [
-        "amlogic/am_gralloc_ext.cpp"
+        "amlogic/am_gralloc_ext.cpp",
+        "amlogic/am_gralloc_uvm_ext.cpp",
     ],
     shared_libs: [
         "liblog",
