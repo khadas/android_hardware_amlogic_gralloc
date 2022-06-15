@@ -998,7 +998,7 @@ int mali_gralloc_buffer_allocate(mali_gralloc_module *m, const gralloc_buffer_de
 			break;
 
 		case HAL_PIXEL_FORMAT_RGB_888:
-			if (usage & (GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER ))
+			if ((usage & GRALLOC_USAGE_HW_TEXTURE) &&  (usage & GRALLOC_USAGE_HW_RENDER))
 			{
 				ALOGD("format 0x%" PRIx64 " and usage 0x%" PRIx64,
 			      base_format, usage);
