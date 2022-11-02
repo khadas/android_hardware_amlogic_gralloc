@@ -168,6 +168,7 @@ void allocate(const buffer_descriptor_t &bufferDescriptor, uint32_t count, IAllo
 	for (const auto &buffer : grallocBuffers)
 	{
 		mali_gralloc_buffer_free(buffer.getNativeHandle());
+		native_handle_delete(const_cast<native_handle_t *>(buffer.getNativeHandle()));
 	}
 }
 

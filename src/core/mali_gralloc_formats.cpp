@@ -1018,6 +1018,7 @@ bool get_supported_format(const uint32_t base_format,
 		return false;
 	}
 
+	// coverity[negative_returns]
 	fmt_supported->f_flags = is_format_supported(fmt_idx,
 	                                             ip_fmt_idx,
 	                                             usage,
@@ -1041,6 +1042,7 @@ bool get_supported_format(const uint32_t base_format,
 
 		/* Set consumer caps to GPU-only (assume superset of DPU). */
 		consumer_nodpu_caps = get_consumer_caps(consumers_nodpu);
+		// coverity[negative_returns]
 		get_active_caps(formats[fmt_idx],
 		                producers, consumers_nodpu,
 		                NULL, &consumer_nodpu_caps,
@@ -1263,6 +1265,7 @@ static uint64_t get_best_format(const uint32_t req_base_format,
 	std::vector<fmt_props> f_compat;
 	for (uint16_t i = 0; i < num_formats; i++)
 	{
+		// coverity[negative_returns]
 		if (is_format_compatible(&formats[req_fmt_idx], &formats[i]))
 		{
 			fmt_props fmt = {0, 0, 0};

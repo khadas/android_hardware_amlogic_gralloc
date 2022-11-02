@@ -898,6 +898,7 @@ int mali_gralloc_buffer_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		err = mali_gralloc_derive_format_and_size(bufDescriptor);
 		if (err != 0)
 		{
+			delete []req_wh;
 			return err;
 		}
 	}
@@ -906,6 +907,7 @@ int mali_gralloc_buffer_allocate(const gralloc_buffer_descriptor_t *descriptors,
 	err = mali_gralloc_ion_allocate(descriptors, numDescriptors, pHandle, &shared);
 	if (err < 0)
 	{
+		delete []req_wh;
 		return err;
 	}
 
@@ -919,8 +921,6 @@ int mali_gralloc_buffer_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		buffer_descriptor_t * const bufDescriptor = (buffer_descriptor_t *)descriptors[i];
 		private_handle_t *hnd = (private_handle_t *)pHandle[i];
 		uint64_t usage = bufDescriptor->consumer_usage | bufDescriptor->producer_usage;
-
-		mali_gralloc_dump_buffer_add(hnd);
 
 		if (shared)
 		{
@@ -945,6 +945,7 @@ int mali_gralloc_buffer_allocate(const gralloc_buffer_descriptor_t *descriptors,
 		*shared_backend = shared;
 	}
 
+	delete []req_wh;
 	return 0;
 }
 
